@@ -33,39 +33,20 @@ table_config = {
         }
     ]
 }
-#
-# records = [
-#     {
-#         "title": "Покраска деталей",
-#         "quantity": 10,
-#         "price": 1500.0,
-#         "client": "Иван Петров",
-#         "status": "Новая",
-#     },
-#     {
-#         "title": "Обработка деталей",
-#         "quantity": 5,
-#         "price": 1000.0,
-#         "client": "Алексей Иванов",
-#         "status": "Новая",
-#     },
-# ]
 
-
-"""
-1 - Показать все записи,
-2 - Добавить новую запись,
-3 - Сохранить данные,
-4 - Выйти из программы,
-"""
 
 import csv
+from pathlib import Path
 
-path = "data/records.csv"
+
+data_dir = Path("data")
+path = data_dir / "records.csv"
 
 
 def main() -> None:
     """Точка входа в программу."""
+
+    data_dir.mkdir(parents=True, exist_ok=True)
 
     records = load_from_csv(path)
 
@@ -186,6 +167,16 @@ def show_records(records: list[dict]) -> None:
             print(f"    {label}: {value}")
 
 
+def edit_record(records: list[dict]) -> None:
+    """Редактирование существующей записи."""
+
+    if not records:
+        print("Нет записей для редактирования.")
+        return
+
+    show_records(records)
+
+
 def show_menu(records: list[dict]) -> None:
     """Взаимодействие с пользователем."""
 
@@ -196,6 +187,7 @@ def show_menu(records: list[dict]) -> None:
                            "1 - Показать все записи\n"
                            "2 - Добавить новую запись\n"
                            "3 - Выйти из программы\n"
+                           "4 - Редактировать запись\n"
                            "Ваш выбор: ")
 
         if user_input == "1":
@@ -219,6 +211,9 @@ def show_menu(records: list[dict]) -> None:
             print("Вы вышли из программы.\n"
                   "Спасибо за внимание.")
             break
+
+        elif user_input == "4":
+            edit_record(records)
 
         else:
             print("Неверный ввод.")
