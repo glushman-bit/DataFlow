@@ -1,7 +1,4 @@
 from second import main
-# from second.tests.config import records, records_empty
-
-
 
 
 def test_delete_record(monkeypatch):
