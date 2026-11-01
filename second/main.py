@@ -112,6 +112,16 @@ def load_from_csv(path) -> list[dict]:
             reader = csv.DictReader(csvfile, delimiter=";")
             records = list(reader)
 
+            headers = reader.fieldnames
+
+            expected_headers = [field["name"] for field in table_config["fields"]]
+
+            if not headers or not all(
+                header in headers for header in expected_headers
+            ):
+                print("Ошибка: структура CSV-файла не соответствует настройкам таблицы.")
+                return []
+
             records_new = []
 
             for record in records:
@@ -176,6 +186,100 @@ def edit_record(records: list[dict]) -> None:
 
     show_records(records)
 
+    while True:
+        try:
+            number = int(input("Введите номер записи для редактирования: "))
+
+            if 1 <= number <= len(records):
+                break
+
+            print("Записи с таким номером нет.")
+
+        except ValueError:
+            print("Введите целое число.")
+
+    record = records[number - 1].copy()
+
+    for field in table_config["fields"]:
+        name = field["name"]
+        label = field["label"]
+        old_value = record[name]
+
+        print(f"   {label}: {old_value}")
+
+        while True:
+            new_value = input(
+                f"Новое значение для поля '{label}' "
+                f"(Enter - оставить без изменений): "
+            ).strip()
+
+            if not new_value:
+                break
+
+            try:
+                new_value = convert_value(new_value, field["type"])
+
+            except ValueError:
+                print("Ошибка: введено некорректное значение.")
+                continue
+
+            record[name] = new_value
+            break
+
+    if record == records[number - 1]:
+        print("Изменений нет. Сохранять нечего.")
+        return
+
+    confirm = input("Сохранить изменения? да/нет: ").strip().lower()
+
+    if confirm == "да":
+        records[number - 1] = record
+        save_to_csv(records, path)
+        print("Изменения сохранены.")
+
+    else:
+        print("Изменения отменены.")
+
+
+def delete_record(records: list[dict]) -> None:
+    """Удаление записи."""
+
+    if not records:
+        print("Нет записей для удаления.")
+        return
+
+    show_records(records)
+
+    while True:
+        try:
+            number = int(input("Введите номер записи для удаления: "))
+
+            if 1 <= number <= len(records):
+                break
+
+            print("Записи с таким номером нет.")
+
+        except ValueError:
+            print("Введите целое число.")
+
+    record = records[number - 1].copy()
+
+    print("\nВы выбрали запись:")
+    for field in table_config["fields"]:
+        name = field["name"]
+        label = field["label"]
+        print(f"   {label}: {record[name]}")
+
+    confirm = input("Уверены что хотите удалить эту запись? да/нет: ").strip().lower()
+
+    if confirm == "да":
+        records.pop(number - 1)
+        save_to_csv(records, path)
+        print("Запись удалена.")
+
+    else:
+        print("Удаление отменено.")
+
 
 def show_menu(records: list[dict]) -> None:
     """Взаимодействие с пользователем."""
@@ -186,9 +290,10 @@ def show_menu(records: list[dict]) -> None:
         user_input = input("Для продолжения работы с программой введите:\n"
                            "1 - Показать все записи\n"
                            "2 - Добавить новую запись\n"
-                           "3 - Выйти из программы\n"
-                           "4 - Редактировать запись\n"
-                           "Ваш выбор: ")
+                           "3 - Редактировать запись\n"
+                           "4 - Удалить запись\n"
+                           "5 - Выйти из программы\n"
+                           "Ваш выбор: ").strip()
 
         if user_input == "1":
             print("Количество заявок: ", len(records))
@@ -197,7 +302,7 @@ def show_menu(records: list[dict]) -> None:
         elif user_input == "2":
             print("Заполните данные заявки:\n")
             data = create_record()
-            user_input = input("Сохранить заявку? да/нет: ")
+            user_input = input("Сохранить заявку? да/нет: ").strip().lower()
 
             if user_input == "да":
                 records.append(data)
@@ -208,12 +313,15 @@ def show_menu(records: list[dict]) -> None:
                 print("Введенные данные не сохранены.")
 
         elif user_input == "3":
+            edit_record(records)
+
+        elif user_input == "4":
+            delete_record(records)
+
+        elif user_input == "5":
             print("Вы вышли из программы.\n"
                   "Спасибо за внимание.")
             break
-
-        elif user_input == "4":
-            edit_record(records)
 
         else:
             print("Неверный ввод.")
