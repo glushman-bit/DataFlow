@@ -116,15 +116,22 @@ def load_from_csv(path) -> list[dict]:
 
             expected_headers = [field["name"] for field in table_config["fields"]]
 
-            if not headers or not all(
-                header in headers for header in expected_headers
+            if (
+                not headers
+                or len(headers) != len(set(headers))
+                or not all(header in headers for header in expected_headers)
             ):
+                # set(headers) оставляет только уникальные значения.
+                # len(headers) — количество всех заголовков.
+                # len(set(headers)) — количество уникальных заголовков.
+                # Если числа отличаются, значит, есть дубликаты.
+
                 print("Ошибка: структура CSV-файла не соответствует настройкам таблицы.")
                 return []
 
             records_new = []
 
-            for record in records:
+            for row_number, record in enumerate(records, start=2):
 
                 rec = {}
 
@@ -133,16 +140,22 @@ def load_from_csv(path) -> list[dict]:
                     field_type = field["type"]
                     value_rec = record[field_name]
 
-                    if value_rec:
-                        value = convert_value(value_rec, field_type)
+                    try:
+                        if value_rec:
+                            value = convert_value(value_rec, field_type)
 
-                    else:
-                        value = "Нет данных"
+                        else:
+                            value = "Нет данных"
+
+                    except ValueError as error:
+                        raise ValueError(
+                            f"Ошибка в строке {row_number}, "
+                            f"поле '{field_name}', значение '{value_rec}': {error}"
+                        ) from error
 
                     rec[field_name] = value
 
                 records_new.append(rec)
-
 
     except FileNotFoundError:
         return []
@@ -159,8 +172,11 @@ def convert_value(value: str, field_type):
     elif field_type == "float":
         return float(value)
 
-    else:
+    elif field_type == "text":
         return value
+
+    else:
+        raise ValueError(f"Неподдерживаемый тип поля: {field_type}")
 
 
 def show_records(records: list[dict]) -> None:
