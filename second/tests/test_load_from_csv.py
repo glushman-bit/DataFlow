@@ -195,4 +195,28 @@ def test_load_from_csv_invalid_number_error(tmp_path, records, expected_error):
     assert expected_error in str(error.value)
 
 
+def test_load_from_csv_empty_numeric_value(tmp_path):
+    """Проверка пустого значения."""
 
+    file_path = tmp_path / "records.csv"
+
+    with open(file_path, "w", newline="", encoding="utf-8-sig") as file:
+        writer = csv.DictWriter(
+            file,
+            fieldnames=[field["name"] for field in table_config["fields"]],
+            delimiter=";",
+        )
+        writer.writeheader()
+        writer.writerow({
+            "title": "Покраска деталей",
+            "quantity": "",
+            "price": "1500",
+            "client": "Иван Петров",
+            "status": "Новая",
+        })
+
+    records = load_from_csv(file_path)
+
+    assert len(records) == 1
+    assert records[0]["quantity"] == "Нет данных"
+    assert records[0]["price"] == 1500.0
