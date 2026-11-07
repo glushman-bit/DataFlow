@@ -1,7 +1,7 @@
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, PermissionDenied
 from decimal import Decimal, InvalidOperation
 
-from dataflow.models import DataRecord
+from dataflow.models import DataRecord, DataTable
 
 
 def validate_record_values(table, values):
@@ -85,8 +85,13 @@ def validate_field_value(field, value):
     raise ValidationError("Неизвестный тип поля.")
 
 
-def create_record(table, values):
-    """Проверяет и сохраняет новую запись."""
+def create_record(user, table, values):
+    """Проверяет права доступа, валидирует и сохраняет запись."""
+
+    if table.owner_id != user.pk:
+        raise PermissionDenied(
+            "У вас нет доступа к этой таблице."
+        )
 
     validated_values = validate_record_values(table, values)
 
@@ -100,3 +105,43 @@ def create_record(table, values):
         table=table,
         values=json_values,
     )
+
+
+def get_user_table(user, table_id):
+    """Возвращает таблицу, принадлежащую пользователю."""
+
+    return DataTable.objects.get(
+        pk=table_id,
+        owner=user,
+    )
+
+
+def get_user_records(user, table_id):
+    """Возвращает записи из таблицы пользователя."""
+
+    table = get_user_table(user, table_id)
+
+    return table.records.all()
+
+
+def update_record(user, table_id, record_id, values):
+    """Проверяет права доступа, валидирует и обновляет запись."""
+
+    table = get_user_table(user, table_id)
+
+    record = table.records.get(pk=record_id)
+
+    validated_values = validate_record_values(table, values)
+
+    json_values = {
+        name: str(value) if isinstance(value, Decimal) else value
+        for name, value in validated_values.items()
+    }
+
+    record.values = json_values
+    record.save(update_fields=["values", "updated_at"])
+
+    return record
+
+
+
