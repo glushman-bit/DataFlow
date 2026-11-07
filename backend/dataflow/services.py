@@ -1,6 +1,8 @@
 from django.core.exceptions import ValidationError
 from decimal import Decimal, InvalidOperation
 
+from dataflow.models import DataRecord
+
 
 def validate_record_values(table, values):
     """Проверяет структуру и значения записи."""
@@ -81,3 +83,20 @@ def validate_field_value(field, value):
             raise ValidationError("Ожидается десятичное число.")
 
     raise ValidationError("Неизвестный тип поля.")
+
+
+def create_record(table, values):
+    """Проверяет и сохраняет новую запись."""
+
+    validated_values = validate_record_values(table, values)
+
+    # Подготавливаем значения для сохранения в JSONField
+    json_values = {
+        name: str(value) if isinstance(value, Decimal) else value
+        for name, value in validated_values.items()
+    }
+
+    return DataRecord.objects.create(
+        table=table,
+        values=json_values,
+    )
