@@ -144,4 +144,11 @@ def update_record(user, table_id, record_id, values):
     return record
 
 
+def delete_record(user, table_id, record_id):
+    """Проверяет права доступа и удаляет запись."""
 
+    table = get_user_table(user, table_id)
+
+    record = table.records.get(pk=record_id)
+
+    record.delete()
