@@ -1,5 +1,6 @@
 import os
 from datetime import timedelta
+# from datetime import timedelta
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -17,7 +18,7 @@ load_dotenv(BASE_DIR / '.env')
 SECRET_KEY = os.getenv('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG') == 'True'
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # ALLOWED_HOSTS = ['*']
 ALLOWED_HOSTS = [
@@ -104,11 +105,11 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# # настройки REST_FRAMEWORK для фильтрации, авторизации, разрешений
-# REST_FRAMEWORK = {
-#     'DEFAULT_AUTHENTICATION_CLASSES': [
-#         'rest_framework_simplejwt.authentication.JWTAuthentication',
-#     ],
+# настройки REST_FRAMEWORK для фильтрации, авторизации, разрешений
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ],
 #     'DEFAULT_FILTER_BACKENDS': ('django_filters.rest_framework.DjangoFilterBackend',),
 #     'DEFAULT_PERMISSION_CLASSES': [
 #         # 'rest_framework.permissions.AllowAny', # Доступ всем
@@ -119,13 +120,13 @@ AUTH_PASSWORD_VALIDATORS = [
 #     # Пагинация на уровне проекта
 #     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
 #     'PAGE_SIZE': 6,
-# }
-#
-# SIMPLE_JWT = {
-#     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=50),
-#     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
-# }
-#
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=50),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+}
+
 # # Настройка
 # SWAGGER_SETTINGS = {
 #     "USE_SESSION_AUTH": False,
@@ -147,7 +148,6 @@ LANGUAGE_CODE = 'ru-ru'
 TIME_ZONE = 'Europe/Moscow'
 
 USE_I18N = True
-USE_L10N = True
 USE_TZ = True
 
 
