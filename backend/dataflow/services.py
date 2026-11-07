@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 
 def validate_record_values(table, values):
-    """Проверяет значения записи по структуре пользовательской таблицы."""
+    """Проверяет структуру и значения записи."""
 
     if not isinstance(values, dict):
         raise ValidationError("Значения записи должны быть словарём.")
@@ -21,15 +21,29 @@ def validate_record_values(table, values):
         if name not in allowed_fields:
             errors[name] = "Такого поля нет в таблице."
 
-    # Проверяем обязательные поля
+    # Проверяем обязательность и типы значений
     for field in fields:
         value = values.get(field.name)
 
-        if field.required and value in (None, ""):
-            errors[field.name] = "Поле обязательно для заполнения."
+        if value in (None, ""):
+            if field.required:
+                errors[field.name] = "Поле обязательно для заполнения."
 
-        elif field.name in values:
-            validated_values[field.name] = value
+            elif field.name in values:
+                validated_values[field.name] = None
+
+            continue
+
+        if field.name not in values:
+            continue
+
+        try:
+            validated_values[field.name] = validate_field_value(
+                field, value,
+            )
+
+        except ValidationError as error:
+            errors[field.name] = error.messages[0]
 
     if errors:
         raise ValidationError(errors)
