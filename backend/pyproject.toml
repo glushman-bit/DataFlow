@@ -8,3 +8,8 @@ dependencies = [
     "load-dotenv>=0.1.0",
     "psycopg>=3.3.8",
 ]
+
+[dependency-groups]
+dev = [
+    "django-stubs>=6.1.2",
+]
