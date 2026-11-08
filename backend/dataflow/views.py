@@ -19,6 +19,10 @@ class DataTableViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         """Возвращает только таблицы текущего пользователя."""
         # get_queryset() ограничивает доступ к записям конкретной таблицей и её владельцем.
+
+        if getattr(self, "swagger_fake_view", False):
+            return DataField.objects.none()
+
         return DataTable.objects.filter(owner=self.request.user)
 
     def perform_create(self, serializer):
@@ -34,6 +38,10 @@ class DataFieldViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Возвращает поля только таблицы текущего пользователя."""
+
+        if getattr(self, "swagger_fake_view", False):
+            return DataField.objects.none()
+
         return DataField.objects.filter(
             table_id=self.kwargs['table_id'],
             table__owner=self.request.user
@@ -58,6 +66,10 @@ class DataRecordViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Возвращает записи только таблицы текущего пользователя."""
+
+        if getattr(self, "swagger_fake_view", False):
+            return DataField.objects.none()
+
         return DataRecord.objects.filter(
             table_id=self.kwargs['table_id'],
             table__owner=self.request.user,
@@ -67,6 +79,10 @@ class DataRecordViewSet(viewsets.ModelViewSet):
         """Передаёт таблицу и HTTP-запрос в сериализатор."""
         context = super().get_serializer_context()  # get_serializer_context() передаёт сериализатору таблицу, чтобы тот мог проверить значения относительно её полей.
                                                     # request уже автоматически передаётся стандартным методом DRF get_serializer_context().
+
+        if getattr(self, "swagger_fake_view", False):
+            return context
+
         context["table"] = get_object_or_404(
             DataTable,
             pk=self.kwargs['table_id'],
