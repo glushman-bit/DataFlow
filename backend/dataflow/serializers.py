@@ -75,9 +75,6 @@ class DataRecordSerializer(serializers.ModelSerializer):
             for name, value in values.items()
         }   # Преобразуем Decimal в str, чтобы JSONField мог их сохранить.
 
-        print("JSON VALUES:", json_values)
-        print("PRICE TYPE:", type(json_values["price"]))
-
         instance.values = json_values   # Обновляем instance.values.
         instance.save()     # Сохраняем запись.
 
@@ -98,6 +95,18 @@ class DataRecordSerializer(serializers.ModelSerializer):
 
         return super().to_internal_value(data)  # Передаёт полный словарь стандартной валидации DRF.
 
+# """
+# Здесь:
+# 1. self.instance — существующая запись, которую обновляем.
+# 2. self.partial — признак частичного обновления (PATCH).
+# 3. current_values — копия старых значений.
+# 4. new_values — значения из запроса.
+# 5. **current_values и **new_values объединяют словари. Если ключ встречается дважды, побеждает значение из new_values.
+# 6. super().to_internal_value(data) передаёт объединённые данные стандартному механизму DRF для дальнейшей обработки и валидации.
+# Таким образом, PATCH не стирает поля, которые пользователь не передал.
+# """
+
+
     class Meta:
         model = DataRecord
         fields = [
@@ -107,4 +116,3 @@ class DataRecordSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
-
