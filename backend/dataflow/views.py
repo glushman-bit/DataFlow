@@ -2,8 +2,12 @@ from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
 
-from dataflow.models import DataTable, DataField
-from dataflow.serializers import DataTableSerializer, DataFieldSerializer
+from dataflow.models import DataTable, DataField, DataRecord
+from dataflow.serializers import (
+    DataTableSerializer,
+    DataFieldSerializer,
+    DataRecordSerializer,
+)
 
 
 class DataTableViewSet(viewsets.ModelViewSet):
@@ -14,6 +18,7 @@ class DataTableViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         """Возвращает только таблицы текущего пользователя."""
+        # get_queryset() ограничивает доступ к записям конкретной таблицей и её владельцем.
         return DataTable.objects.filter(owner=self.request.user)
 
     def perform_create(self, serializer):
@@ -43,3 +48,29 @@ class DataFieldViewSet(viewsets.ModelViewSet):
         )
 
         serializer.save(table=table)
+
+
+class DataRecordViewSet(viewsets.ModelViewSet):
+    """API для управления записями пользовательских таблиц."""
+
+    serializer_class = DataRecordSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        """Возвращает записи только таблицы текущего пользователя."""
+        return DataRecord.objects.filter(
+            table_id=self.kwargs['table_id'],
+            table__owner=self.request.user,
+        )
+
+    def get_serializer_context(self):
+        """Передаёт таблицу и HTTP-запрос в сериализатор."""
+        context = super().get_serializer_context()  # get_serializer_context() передаёт сериализатору таблицу, чтобы тот мог проверить значения относительно её полей.
+                                                    # request уже автоматически передаётся стандартным методом DRF get_serializer_context().
+        context["table"] = get_object_or_404(
+            DataTable,
+            pk=self.kwargs['table_id'],
+            owner=self.request.user
+        )
+
+        return context
