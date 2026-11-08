@@ -67,9 +67,14 @@ def validate_field_value(field, value):
             raise ValidationError("Ожидается целое число.")
 
         try:
-            return int(value)
+            result = int(value)
 
-        except (ValueError, TypeError):
+            if isinstance(value, (float, Decimal)) and value != result:
+                raise ValidationError("Ожидается целое число.")
+
+            return result
+
+        except (ValueError, TypeError, OverflowError):
             raise ValidationError("Ожидается целое число.")
 
     if field.field_type == "decimal":
