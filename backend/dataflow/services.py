@@ -36,9 +36,6 @@ def validate_record_values(table, values):
 
             continue
 
-        if field.name not in values:
-            continue
-
         try:
             validated_values[field.name] = validate_field_value(
                 field, value,
