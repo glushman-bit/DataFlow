@@ -52,9 +52,6 @@ class DataRecordSerializer(serializers.ModelSerializer):
         table = self.context.get("table")
         request = self.context.get("request")
 
-        if table is None:
-            raise serializers.ValidationError("Не указана таблица для записи.")
-
         if request is None:
             raise serializers.ValidationError("Не передан HTTP-запрос.")
 
