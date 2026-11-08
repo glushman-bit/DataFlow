@@ -18,3 +18,7 @@ exclude_lines =
 * uv run coverage -m  - вывод покрытия в консоль -m показывает не покрытые строки
 * uv run coverage html - отчет в html файл
 * uv run coverage debug config - просмотр параметров настроек
+
+```textmate
+uv run pytest --cov=dataflow --cov-report=term-missing
+```

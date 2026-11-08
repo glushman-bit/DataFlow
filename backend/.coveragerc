@@ -10,7 +10,7 @@ omit =
     */admin.py
     */urls.py
     */tests.py
-    */employees/tests/*
+    */dataflow/tests/*
 
 [report]
 exclude_lines =
