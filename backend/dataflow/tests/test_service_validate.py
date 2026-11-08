@@ -159,3 +159,23 @@ def test_validate_record_values_optional_field_empty(data_table):
         "quantity": 25,
         "price": None,
     }
+
+
+@pytest.mark.django_db
+def test_validate_record_values_optional_field_missing(data_table):
+    """Проверяет отсутствие необязательного поля."""
+
+    result = validate_record_values(
+        data_table,
+        {
+            "title": "Покраска деталей",
+            "quantity": 10,
+        },
+    )
+
+    assert result == {
+        "title": "Покраска деталей",
+        "quantity": 10,
+    }
+
+    assert "price" not in result
