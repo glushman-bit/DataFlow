@@ -1,6 +1,9 @@
+import { useState } from 'react'
 import './App.css'
 
+
 function App() {
+  const [activePage, setActivePage] = useState('tables')
   return (
     <div className="app">
       <header className="header">
@@ -13,15 +16,37 @@ function App() {
           <h2>Навигация</h2>
           <nav>
             <ul>
-              <li>Мои таблицы</li>
-              <li>Настройки</li>
+              <li
+                className={activePage === 'tables' ? 'active' : ''}
+                onClick={() => setActivePage('tables')}
+              >
+                Мои таблицы
+              </li>
+
+              <li
+                className={activePage === 'settings' ? 'active' : ''}
+                onClick={() => setActivePage('settings')}
+              >
+                Настройки
+              </li>
           </ul>
           </nav>
         </aside>
 
         <main className="content">
-          <h2>Мои таблицы</h2>
-          <p>Здесь будут отображаться ваши таблицы.</p>
+          {activePage === 'tables' && (
+            <>
+              <h2>Мои таблицы</h2>
+              <p>Здесь будут отображаться ваши таблицы.</p>
+            </>
+          )}
+
+          {activePage === 'settings' && (
+            <>
+              <h2>Настройки</h2>
+              <p>Здесь будут настройки пользователя.</p>
+            </>
+          )}
         </main>
       </div>
     </div>
