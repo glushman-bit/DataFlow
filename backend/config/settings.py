@@ -128,18 +128,21 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
 }
 
-# # Настройка
-# SWAGGER_SETTINGS = {
-#     "USE_SESSION_AUTH": False,
-#     "SECURITY_DEFINITIONS": {
-#         "Bearer": {
-#             "type": "apiKey",
-#             "name": "Authorization",
-#             "in": "header",
-#             "description": ("Введите JWT access-токен в формате: " "Bearer <access_token>"),
-#         }
-#     },
-# }
+# Настройка
+SWAGGER_SETTINGS = {
+    "USE_SESSION_AUTH": False,
+    "SECURITY_DEFINITIONS": {
+        "Bearer": {
+            "type": "apiKey",
+            "name": "Authorization",
+            "in": "header",
+            "description": (
+                "Введите JWT access-токен в формате: "
+                "Bearer <access_token>"
+            ),
+        }
+    },
+}
 
 # Internationalization
 # https://docs.djangoproject.com/en/6.1/topics/i18n/
