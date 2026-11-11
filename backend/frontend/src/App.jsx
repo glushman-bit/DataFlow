@@ -17,6 +17,13 @@ function App() {
     setIsAuthenticated(true)
   }
 
+  function handleLogout() {
+    localStorage.removeItem('access')
+    localStorage.removeItem('refresh')
+
+    setIsAuthenticated(false)
+  }
+
   return (
       <>
         {!isAuthenticated ? (
@@ -26,6 +33,10 @@ function App() {
               <header className="header">
                 <h1>DataFlow</h1>
                 <span>Универсальная система пользовательских таблиц</span>
+
+                <button onClick={handleLogout}>
+                  Выйти
+                </button>
               </header>
 
               <div className="main">
