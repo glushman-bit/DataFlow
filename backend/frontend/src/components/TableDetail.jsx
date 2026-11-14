@@ -4,6 +4,7 @@ import {
   createField,
   getRecords,
   createRecord,
+  updateRecord,
   deleteRecord
 } from '../api/tables'
 
@@ -17,6 +18,9 @@ function TableDetail({ table, onBack }) {
   const [newFieldType, setNewFieldType] = useState('text')
   const [newRecordValues, setNewRecordValues] = useState({})
   const [recordToDelete, setRecordToDelete] = useState(null)
+  const [editingRecordId, setEditingRecordId] = useState(null)
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+
 
   useEffect(() => {
     async function loadFields() {
@@ -67,6 +71,13 @@ function TableDetail({ table, onBack }) {
     })
   }
 
+  function handleEditRecord(record) {
+    setEditingRecordId(record.id)
+    setNewRecordValues({ ...record.values })
+    setError('')
+    setIsEditModalOpen(true)
+  }
+
   async function handleAddRecord() {
     try {
       const token = localStorage.getItem('access')
@@ -80,9 +91,43 @@ function TableDetail({ table, onBack }) {
       setRecords([...records, newRecord])
       setNewRecordValues({})
       setError('')
+
     } catch (error) {
       setError(error.message)
     }
+  }
+
+  async function handleUpdateRecord() {
+    try {
+      const updatedRecord = await updateRecord(
+        table.id,
+        editingRecordId,
+        newRecordValues
+      )
+
+      setRecords(
+        records.map((record) =>
+          record.id === editingRecordId
+            ? updatedRecord
+            : record
+        )
+      )
+
+      setEditingRecordId(null)
+      setNewRecordValues({})
+      setIsEditModalOpen(false)
+      setError('')
+
+    } catch (error) {
+      setError(error.message)
+    }
+  }
+
+  function handleCancelEdit() {
+    setIsEditModalOpen(false)
+    setEditingRecordId(null)
+    setNewRecordValues({})
+    setError('')
   }
 
   function handleDeleteRecord(recordId) {
@@ -180,6 +225,17 @@ function TableDetail({ table, onBack }) {
         <button onClick={handleAddRecord}>
           Добавить запись
         </button>
+
+        {editingRecordId !== null && (
+          <button
+            onClick={() => {
+              setEditingRecordId(null)
+              setNewRecordValues({})
+            }}
+          >
+            Отмена
+          </button>
+        )}
       </div>
 
       <h3>Записи таблицы</h3>
@@ -208,7 +264,16 @@ function TableDetail({ table, onBack }) {
                     {record.values[field.name]}
                   </td>
                 ))}
+
                 <td>
+                  <button
+                    className="edit-button"
+                    onClick={() => handleEditRecord(record)}
+                    title="Редактировать запись"
+                  >
+                    ✎
+                  </button>
+
                   <button
                     className="delete-button"
                     onClick={() => handleDeleteRecord(record.id)}
@@ -217,11 +282,52 @@ function TableDetail({ table, onBack }) {
                     ×
                   </button>
                 </td>
+
               </tr>
             ))}
           </tbody>
         </table>
       )}
+
+    {isEditModalOpen && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <h3>Редактирование записи</h3>
+
+          <div className="record-form modal-record-form">
+            {fields.map((field) => (
+              <div className="form-group" key={field.id}>
+                <label>{field.label}</label>
+
+                <input
+                  type="text"
+                  value={newRecordValues[field.name] ?? ''}
+                  onChange={(event) =>
+                    handleRecordChange(field.name, event.target.value)
+                  }
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="modal-actions">
+            <button
+              className="cancel-button"
+              onClick={handleCancelEdit}
+            >
+              Отмена
+            </button>
+
+            <button
+              className="save-button"
+              onClick={handleUpdateRecord}
+            >
+              Сохранить
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     {recordToDelete !== null && (
       <div className="modal-overlay">
