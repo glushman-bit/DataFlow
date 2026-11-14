@@ -47,6 +47,7 @@ export async function createTable(name, token) {
   return response.json()
 }
 
+
 export async function getFields(tableId, token) {
   const response = await apiRequest(`/api/tables/${tableId}/fields/`)
 
@@ -56,6 +57,7 @@ export async function getFields(tableId, token) {
 
   return response.json()
 }
+
 
 export async function createField(tableId, fieldData, token) {
   const response = await apiRequest(`/api/tables/${tableId}/fields/`, {
@@ -73,6 +75,7 @@ export async function createField(tableId, fieldData, token) {
   return response.json()
 }
 
+
 export async function getRecords(tableId, token) {
   const response = await apiRequest(`/api/tables/${tableId}/records/`)
 
@@ -82,6 +85,7 @@ export async function getRecords(tableId, token) {
 
   return response.json()
 }
+
 
 export async function createRecord(tableId, values, token) {
   const response = await apiRequest(`/api/tables/${tableId}/records/`, {
@@ -100,6 +104,21 @@ export async function createRecord(tableId, values, token) {
 
   return response.json()
 }
+
+
+export async function deleteRecord(tableId, recordId, token) {
+  const response = await apiRequest(
+    `/api/tables/${tableId}/records/${recordId}/`,
+    {
+      method: 'DELETE',
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error('Не удалось удалить запись.')
+  }
+}
+
 
 export async function refreshAccessToken() {
   const refresh = localStorage.getItem('refresh')
@@ -124,6 +143,7 @@ export async function refreshAccessToken() {
 
   return data.access
 }
+
 
 async function apiRequest(url, options = {}) {
   let token = localStorage.getItem('access')

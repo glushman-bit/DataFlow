@@ -1,5 +1,11 @@
 import { useState, useEffect } from "react";
-import { getFields, createField, getRecords, createRecord } from '../api/tables'
+import {
+  getFields,
+  createField,
+  getRecords,
+  createRecord,
+  deleteRecord
+} from '../api/tables'
 
 
 function TableDetail({ table, onBack }) {
@@ -10,6 +16,7 @@ function TableDetail({ table, onBack }) {
   const [newFieldLabel, setNewFieldLabel] = useState('')
   const [newFieldType, setNewFieldType] = useState('text')
   const [newRecordValues, setNewRecordValues] = useState({})
+  const [recordToDelete, setRecordToDelete] = useState(null)
 
   useEffect(() => {
     async function loadFields() {
@@ -72,6 +79,27 @@ function TableDetail({ table, onBack }) {
 
       setRecords([...records, newRecord])
       setNewRecordValues({})
+      setError('')
+    } catch (error) {
+      setError(error.message)
+    }
+  }
+
+  function handleDeleteRecord(recordId) {
+    setRecordToDelete(recordId)
+  }
+
+  async function confirmDeleteRecord() {
+    try {
+      const token = localStorage.getItem('access')
+
+      await deleteRecord(table.id, recordToDelete, token)
+
+      setRecords(
+        records.filter((record) => record.id !== recordToDelete)
+      )
+
+      setRecordToDelete(null)
       setError('')
     } catch (error) {
       setError(error.message)
@@ -167,6 +195,8 @@ function TableDetail({ table, onBack }) {
                   {field.label}
                 </th>
               ))}
+
+              <th>Действия</th>
             </tr>
           </thead>
 
@@ -178,12 +208,46 @@ function TableDetail({ table, onBack }) {
                     {record.values[field.name]}
                   </td>
                 ))}
+                <td>
+                  <button
+                    className="delete-button"
+                    onClick={() => handleDeleteRecord(record.id)}
+                    title="Удалить запись"
+                  >
+                    ×
+                  </button>
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
       )}
 
+    {recordToDelete !== null && (
+      <div className="modal-overlay">
+        <div className="modal">
+          <h3>Удаление записи</h3>
+
+          <p>Вы действительно хотите удалить эту запись?</p>
+
+          <div className="modal-actions">
+            <button
+              className="cancel-button"
+              onClick={() => setRecordToDelete(null)}
+            >
+              Отмена
+            </button>
+
+            <button
+              className="confirm-button"
+              onClick={confirmDeleteRecord}
+            >
+              Удалить
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
 
     </div>
   )
