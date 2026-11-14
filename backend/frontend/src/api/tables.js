@@ -98,9 +98,15 @@ export async function createRecord(tableId, values, token) {
     }),
   })
 
+
+  console.log('Статус ответа:', response.status)
+  console.log('Ответ сервера:', response)
+
   if (!response.ok) {
-    throw new Error('Не удалось создать запись.')
+    await handleApiError(response, 'Не удалось создать запись.')
   }
+
+
 
   return response.json()
 }
@@ -120,6 +126,16 @@ export async function deleteRecord(tableId, recordId, token) {
 }
 
 
+async function handleApiError(response, defaultMessage) {
+  const data = await response.json()
+
+  const error = new Error(defaultMessage)
+  error.details = data
+
+  throw error
+}
+
+
 export async function updateRecord(tableId, recordId, values) {
   const response = await apiRequest(
     `/api/tables/${tableId}/records/${recordId}/`,
@@ -135,7 +151,7 @@ export async function updateRecord(tableId, recordId, values) {
   )
 
   if (!response.ok) {
-    throw new Error('Не удалось обновить запись.')
+    await handleApiError(response, 'Не удалось обновить запись.')
   }
 
   return response.json()

@@ -20,6 +20,12 @@ function TableDetail({ table, onBack }) {
   const [recordToDelete, setRecordToDelete] = useState(null)
   const [editingRecordId, setEditingRecordId] = useState(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [newFieldRequired, setNewFieldRequired] = useState(true)
+  const [newFieldSettings, setNewFieldSettings] = useState({})
+  const [fieldErrors, setFieldErrors] = useState({})
+  const [editFieldErrors, setEditFieldErrors] = useState({})
+  const [editError, setEditError] = useState('')
+
 
 
   useEffect(() => {
@@ -45,9 +51,9 @@ function TableDetail({ table, onBack }) {
       name: newFieldName.trim(),
       label: newFieldLabel.trim(),
       field_type: newFieldType,
-      required: true,
+      required: newFieldRequired,
       order: fields.length,
-      settings: {},
+      settings: newFieldSettings,
     }
 
     try {
@@ -58,22 +64,50 @@ function TableDetail({ table, onBack }) {
       setNewFieldName('')
       setNewFieldLabel('')
       setNewFieldType('text')
+      setNewFieldRequired(true)
+      setNewFieldSettings({})
       setError('')
     } catch (error) {
       setError(error.message)
     }
   }
 
+  function getInputType(fieldType) {
+    const inputTypes = {
+      text: 'text',
+      integer: 'number',
+      decimal: 'number',
+      date: 'date',
+      datetime: 'datetime-local',
+    }
+
+    return inputTypes[fieldType] || 'text'
+  }
+
   function handleRecordChange(fieldName, value) {
-    setNewRecordValues({
-      ...newRecordValues,
+    setNewRecordValues((prev) => ({
+      ...prev,
       [fieldName]: value,
+    }))
+
+    setFieldErrors((prev) => {
+      const updatedErrors = { ...prev }
+      delete updatedErrors[fieldName]
+      return updatedErrors
+    })
+
+    setEditFieldErrors((prev) => {
+      const updatedErrors = { ...prev }
+      delete updatedErrors[fieldName]
+      return updatedErrors
     })
   }
 
   function handleEditRecord(record) {
     setEditingRecordId(record.id)
     setNewRecordValues({ ...record.values })
+    setEditFieldErrors({})
+    setEditError('')
     setError('')
     setIsEditModalOpen(true)
   }
@@ -82,23 +116,27 @@ function TableDetail({ table, onBack }) {
     try {
       const token = localStorage.getItem('access')
 
-      const newRecord = await createRecord(
-        table.id,
-        newRecordValues,
-        token
-      )
+      setError('')
+      setFieldErrors({})
+
+      const newRecord = await createRecord(table.id, newRecordValues, token)
 
       setRecords([...records, newRecord])
       setNewRecordValues({})
-      setError('')
-
     } catch (error) {
-      setError(error.message)
+      if (error.details?.values) {
+        setFieldErrors(error.details.values)
+      } else {
+        setError(error.message)
+      }
     }
   }
 
   async function handleUpdateRecord() {
     try {
+      setEditFieldErrors({})
+      setEditError('')
+
       const updatedRecord = await updateRecord(
         table.id,
         editingRecordId,
@@ -119,7 +157,11 @@ function TableDetail({ table, onBack }) {
       setError('')
 
     } catch (error) {
-      setError(error.message)
+      if (error.details?.values) {
+        setEditFieldErrors(error.details.values)
+      } else {
+        setEditError(error.message)
+      }
     }
   }
 
@@ -127,6 +169,8 @@ function TableDetail({ table, onBack }) {
     setIsEditModalOpen(false)
     setEditingRecordId(null)
     setNewRecordValues({})
+    setEditFieldErrors({})
+    setEditError('')
     setError('')
   }
 
@@ -183,10 +227,53 @@ function TableDetail({ table, onBack }) {
           onChange={(event) => setNewFieldType(event.target.value)}
         >
           <option value="text">Текст</option>
-          <option value="number">Число</option>
+          <option value="integer">Целое число</option>
+          <option value="decimal">Десятичное число</option>
           <option value="date">Дата</option>
+          <option value="datetime">Дата и время</option>
           <option value="boolean">Да / Нет</option>
         </select>
+
+        <label className="field-required">
+          <input
+            type="checkbox"
+            checked={newFieldRequired}
+            onChange={(event) => setNewFieldRequired(event.target.checked)}
+          />
+          Обязательное поле
+        </label>
+
+        {newFieldType === 'integer' && (
+          <div className="field-settings">
+            <input
+              type="number"
+              placeholder="Минимальное значение"
+              value={newFieldSettings.min ?? ''}
+              onChange={(event) => {
+                const value = event.target.value
+
+                setNewFieldSettings((prev) => ({
+                  ...prev,
+                  min: value === '' ? undefined : value,
+                }))
+              }}
+            />
+
+            <input
+              type="number"
+              placeholder="Максимальное значение"
+              value={newFieldSettings.max ?? ''}
+              onChange={(event) => {
+                const value = event.target.value
+
+                setNewFieldSettings((prev) => ({
+                  ...prev,
+                  max: value === '' ? undefined : value,
+                }))
+              }}
+            />
+          </div>
+        )}
 
         <button onClick={handleAddField}>
           Добавить поле
@@ -211,15 +298,23 @@ function TableDetail({ table, onBack }) {
 
       <div className="record-form">
         {fields.map((field) => (
-          <input
-            key={field.id}
-            type="text"
-            placeholder={field.label}
-            value={newRecordValues[field.name] || ''}
-            onChange={(event) =>
-              handleRecordChange(field.name, event.target.value)
-            }
-          />
+          <div className="form-group" key={field.id}>
+            <input
+              type="text"
+              placeholder={field.label}
+              value={newRecordValues[field.name] || ''}
+              className={fieldErrors[field.name] ? 'input-error' : ''}
+              onChange={(event) =>
+                handleRecordChange(field.name, event.target.value)
+              }
+            />
+
+            {fieldErrors[field.name] && (
+              <p className="field-error">
+                {fieldErrors[field.name][0]}
+              </p>
+            )}
+          </div>
         ))}
 
         <button onClick={handleAddRecord}>
@@ -295,6 +390,10 @@ function TableDetail({ table, onBack }) {
           <h3>Редактирование записи</h3>
 
           <div className="record-form modal-record-form">
+            {editError && (
+              <p className="field-error">{editError}</p>
+            )}
+
             {fields.map((field) => (
               <div className="form-group" key={field.id}>
                 <label>{field.label}</label>
@@ -302,10 +401,17 @@ function TableDetail({ table, onBack }) {
                 <input
                   type="text"
                   value={newRecordValues[field.name] ?? ''}
+                  className={editFieldErrors[field.name] ? 'input-error' : ''}
                   onChange={(event) =>
                     handleRecordChange(field.name, event.target.value)
                   }
                 />
+
+                {editFieldErrors[field.name] && (
+                  <p className="field-error">
+                    {editFieldErrors[field.name][0]}
+                  </p>
+                )}
               </div>
             ))}
           </div>
