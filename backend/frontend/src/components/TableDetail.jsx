@@ -308,9 +308,21 @@ function TableDetail({ table, onBack }) {
 
       <h3>Добавить запись</h3>
 
+      <p className="required-hint">
+        <span className="required-mark">*</span> — обязательное поле
+      </p>
+
       <div className="record-form">
         {fields.map((field) => (
           <div className="form-group" key={field.id}>
+
+            <label>
+              {field.label}
+              {field.required && (
+                <span className="required-mark"> *</span>
+              )}
+            </label>
+
             {field.field_type === 'boolean' ? (
               <select
                 value={
@@ -329,6 +341,7 @@ function TableDetail({ table, onBack }) {
                 <option value="false">Нет</option>
               </select>
             ) : (
+
               <input
                 type={getInputType(field.field_type)}
                 step={
@@ -340,7 +353,6 @@ function TableDetail({ table, onBack }) {
                 }
                 min={field.settings?.min}
                 max={field.settings?.max}
-                placeholder={field.label}
                 value={newRecordValues[field.name] ?? ''}
                 className={fieldErrors[field.name] ? 'input-error' : ''}
                 onChange={(event) =>
@@ -443,7 +455,12 @@ function TableDetail({ table, onBack }) {
 
             {fields.map((field) => (
               <div className="form-group" key={field.id}>
-                <label>{field.label}</label>
+                <label>
+                  {field.label}
+                  {field.required && (
+                    <span className="required-mark"> *</span>
+                  )}
+                </label>
 
                 {field.field_type === 'boolean' ? (
                   <select
