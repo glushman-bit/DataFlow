@@ -238,6 +238,17 @@ button:hover {
   min-width: 130px;
 }
 
+.record-form .form-group {
+  flex: 1 1 160px;
+  min-width: 130px;
+}
+
+.record-form .form-group input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 /* Авторизация */
 
 .login {
@@ -398,6 +409,15 @@ tbody tr:last-child td {
   .table-detail {
     overflow-x: auto;
   }
+
+  .record-form .form-group {
+  flex: 1 1 100%;
+  min-width: 0;
+}
+
+.record-form .form-group input {
+  width: 100%;
+}
 }
 
 @media (max-width: 480px) {
@@ -576,4 +596,36 @@ tbody tr:last-child td {
   padding: 8px 10px;
   box-sizing: border-box;
   font-size: 14px;
+}
+
+.modal-record-form .field-error {
+  margin: 4px 0 0;
+}
+
+/* Поле с ошибкой */
+.input-error {
+  border: 1px solid #dc6464 !important;
+  background-color: #fff8f8;
+}
+
+.input-error:focus {
+  border-color: #dc6464 !important;
+  box-shadow: 0 0 0 2px rgba(220, 100, 100, 0.12);
+  outline: none;
+}
+
+/* Текст ошибки под полем */
+.field-error {
+  margin: 4px 0 0;
+  padding-left: 2px;
+  color: #c74444;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Адаптивность формы добавления записи */
+@media (max-width: 600px) {
+  .record-form:not(.modal-record-form) {
+    grid-template-columns: 1fr;
+  }
 }
