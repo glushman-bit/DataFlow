@@ -103,6 +103,18 @@ function TableDetail({ table, onBack }) {
     })
   }
 
+  function handleTypedRecordChange(field, value) {
+    if (field.field_type === 'boolean') {
+      handleRecordChange(
+        field.name,
+        value === '' ? '' : value === 'true'
+      )
+      return
+    }
+
+    handleRecordChange(field.name, value)
+  }
+
   function handleEditRecord(record) {
     setEditingRecordId(record.id)
     setNewRecordValues({ ...record.values })
@@ -299,15 +311,43 @@ function TableDetail({ table, onBack }) {
       <div className="record-form">
         {fields.map((field) => (
           <div className="form-group" key={field.id}>
-            <input
-              type="text"
-              placeholder={field.label}
-              value={newRecordValues[field.name] || ''}
-              className={fieldErrors[field.name] ? 'input-error' : ''}
-              onChange={(event) =>
-                handleRecordChange(field.name, event.target.value)
-              }
-            />
+            {field.field_type === 'boolean' ? (
+              <select
+                value={
+                  newRecordValues[field.name] === undefined ||
+                  newRecordValues[field.name] === ''
+                    ? ''
+                    : String(newRecordValues[field.name])
+                }
+                className={fieldErrors[field.name] ? 'input-error' : ''}
+                onChange={(event) =>
+                  handleTypedRecordChange(field, event.target.value)
+                }
+              >
+                <option value="">Выберите значение</option>
+                <option value="true">Да</option>
+                <option value="false">Нет</option>
+              </select>
+            ) : (
+              <input
+                type={getInputType(field.field_type)}
+                step={
+                  field.field_type === 'integer'
+                    ? 1
+                    : field.field_type === 'decimal'
+                      ? 'any'
+                      : undefined
+                }
+                min={field.settings?.min}
+                max={field.settings?.max}
+                placeholder={field.label}
+                value={newRecordValues[field.name] ?? ''}
+                className={fieldErrors[field.name] ? 'input-error' : ''}
+                onChange={(event) =>
+                  handleTypedRecordChange(field, event.target.value)
+                }
+              />
+            )}
 
             {fieldErrors[field.name] && (
               <p className="field-error">
@@ -356,7 +396,13 @@ function TableDetail({ table, onBack }) {
               <tr key={record.id}>
                 {fields.map((field) => (
                   <td key={field.id}>
-                    {record.values[field.name]}
+                    {field.field_type === 'boolean'
+                      ? record.values[field.name] === true
+                        ? 'Да'
+                        : record.values[field.name] === false
+                          ? 'Нет'
+                          : ''
+                      : record.values[field.name]}
                   </td>
                 ))}
 
@@ -384,6 +430,7 @@ function TableDetail({ table, onBack }) {
         </table>
       )}
 
+
     {isEditModalOpen && (
       <div className="modal-overlay">
         <div className="modal">
@@ -398,14 +445,46 @@ function TableDetail({ table, onBack }) {
               <div className="form-group" key={field.id}>
                 <label>{field.label}</label>
 
-                <input
-                  type="text"
-                  value={newRecordValues[field.name] ?? ''}
-                  className={editFieldErrors[field.name] ? 'input-error' : ''}
-                  onChange={(event) =>
-                    handleRecordChange(field.name, event.target.value)
-                  }
-                />
+                {field.field_type === 'boolean' ? (
+                  <select
+                    value={
+                      newRecordValues[field.name] === undefined ||
+                      newRecordValues[field.name] === ''
+                        ? ''
+                        : String(newRecordValues[field.name])
+                    }
+                    className={
+                      editFieldErrors[field.name] ? 'input-error' : ''
+                    }
+                    onChange={(event) =>
+                      handleTypedRecordChange(field, event.target.value)
+                    }
+                  >
+                    <option value="">Выберите значение</option>
+                    <option value="true">Да</option>
+                    <option value="false">Нет</option>
+                  </select>
+                ) : (
+                  <input
+                    type={getInputType(field.field_type)}
+                    step={
+                      field.field_type === 'integer'
+                        ? 1
+                        : field.field_type === 'decimal'
+                          ? 'any'
+                          : undefined
+                    }
+                    min={field.settings?.min}
+                    max={field.settings?.max}
+                    value={newRecordValues[field.name] ?? ''}
+                    className={
+                      editFieldErrors[field.name] ? 'input-error' : ''
+                    }
+                    onChange={(event) =>
+                      handleTypedRecordChange(field, event.target.value)
+                    }
+                  />
+                )}
 
                 {editFieldErrors[field.name] && (
                   <p className="field-error">
@@ -434,6 +513,7 @@ function TableDetail({ table, onBack }) {
         </div>
       </div>
     )}
+
 
     {recordToDelete !== null && (
       <div className="modal-overlay">
