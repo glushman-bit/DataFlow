@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError, PermissionDenied
 from decimal import Decimal, InvalidOperation
+from datetime import datetime, date
 
 from dataflow.models import DataRecord, DataTable
 
@@ -27,7 +28,12 @@ def validate_record_values(table, values):
     for field in fields:
         value = values.get(field.name)
 
-        if value in (None, ""):
+        is_empty = (
+            value is None
+            or (isinstance(value, str) and not value.strip())
+        )
+
+        if is_empty:
             if field.required:
                 errors[field.name] = "Поле обязательно для заполнения."
 
@@ -69,7 +75,7 @@ def validate_field_value(field, value):
             if isinstance(value, (float, Decimal)) and value != result:
                 raise ValidationError("Ожидается целое число.")
 
-            return result
+            return validate_numeric_limits(field, result)
 
         except (ValueError, TypeError, OverflowError):
             raise ValidationError("Ожидается целое число.")
@@ -79,10 +85,42 @@ def validate_field_value(field, value):
             raise ValidationError("Ожидается десятичное число.")
 
         try:
-            return Decimal(value)
+            result = Decimal(str(value))
+
+            if not result.is_finite():
+                raise ValidationError("Число должно быть конечным.")
+
+            validate_numeric_limits(field, result)
+
+            return validate_decimal_places(field, result)
 
         except (InvalidOperation, ValueError, TypeError):
             raise ValidationError("Ожидается десятичное число.")
+
+    if field.field_type == "date":
+
+        try:
+            result = date.fromisoformat(value)
+            return result.isoformat()
+
+        except (ValueError, TypeError):
+            raise ValidationError("Ожидается дата в формате ГГГГ-ММ-ДД.")
+
+    if field.field_type == "datetime":
+
+        try:
+            result = datetime.fromisoformat(value)
+            return result.isoformat()
+
+        except (ValueError, TypeError):
+            raise ValidationError("Ожидается дата и время в формате ISO.")
+
+    if field.field_type == "boolean":
+
+        if not isinstance(value, bool):
+            raise ValidationError("Ожидается логическое значение.")
+
+        return value
 
     raise ValidationError("Неизвестный тип поля.")
 
@@ -154,3 +192,61 @@ def delete_record(user, table_id, record_id):
     record = table.records.get(pk=record_id)
 
     record.delete()
+
+
+def validate_numeric_limits(field, value):
+    """Проверяет минимальное и максимальное значения."""
+
+    settings = field.settings or {}
+
+    for setting, error_message in [
+        ("min", "Значение меньше допустимого минимума."),
+        ("max", "Значение больше допустимого максимума."),
+    ]:
+        limit = settings.get(setting)
+
+        if limit is None:
+            continue
+
+        try:
+            limit = Decimal(str(limit))
+
+        except (InvalidOperation, ValueError, TypeError):
+            raise ValidationError(f"Некорректная настройка {setting}.")
+
+        if not limit.is_finite():
+            raise ValidationError(f"Некорректная настройка {setting}.")
+
+        if setting == "min" and value < limit:
+            raise ValidationError(error_message)
+
+        if setting == "max" and value > limit:
+            raise ValidationError(error_message)
+
+    return value
+
+
+def validate_decimal_places(field, value):
+    """Проверяет количество знаков после запятой."""
+
+    settings = field.settings or {}
+    decimal_places = settings.get("decimal_places")
+
+    if decimal_places is None:
+        return value
+
+    if (
+        isinstance(decimal_places, bool)
+        or not isinstance(decimal_places, int)
+        or decimal_places < 0
+    ):
+        raise ValidationError("Некорректная настройка decimal_places.")
+
+    actual_places = max(0, -value.as_tuple().exponent)  # as_tuple().exponent — он позволяет определить количество знаков после запятой без округления числа
+
+    if actual_places > decimal_places:
+        raise ValidationError(
+            f"Допускается не более {decimal_places} знаков после запятой."
+        )
+
+    return value
