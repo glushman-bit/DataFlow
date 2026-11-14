@@ -120,6 +120,28 @@ export async function deleteRecord(tableId, recordId, token) {
 }
 
 
+export async function updateRecord(tableId, recordId, values) {
+  const response = await apiRequest(
+    `/api/tables/${tableId}/records/${recordId}/`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        values: values,
+      }),
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error('Не удалось обновить запись.')
+  }
+
+  return response.json()
+}
+
+
 export async function refreshAccessToken() {
   const refresh = localStorage.getItem('refresh')
 
