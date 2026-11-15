@@ -131,6 +131,29 @@ function TableDetail({ table, onBack }) {
       }
     }
 
+    // Ограничения длины текста
+    if (field.field_type === 'text') {
+      const minLength = field.settings?.min_length
+      const maxLength = field.settings?.max_length
+
+      if (minLength !== undefined && maxLength !== undefined) {
+        hints.push(`от ${minLength} до ${maxLength} символов`)
+      } else if (minLength !== undefined) {
+        hints.push(`не менее ${minLength} символов`)
+      } else if (maxLength !== undefined) {
+        hints.push(`не более ${maxLength} символов`)
+      }
+    }
+
+    // Точность десятичного числа
+    if (field.field_type === 'decimal') {
+      const decimalPlaces = field.settings?.decimal_places
+
+      if (decimalPlaces !== undefined) {
+        hints.push(`знаков после запятой: ${decimalPlaces}`)
+      }
+    }
+
     // Обязательность поля
     if (!field.required) {
       hints.push('необязательное поле')
