@@ -84,6 +84,61 @@ function TableDetail({ table, onBack }) {
     return inputTypes[fieldType] || 'text'
   }
 
+  function getFieldHint(field) {
+    const hints = []
+
+    // Подсказка в зависимости от типа поля
+    switch (field.field_type) {
+      case 'text':
+        hints.push('Введите текст')
+        break
+
+      case 'integer':
+        hints.push('Целое число')
+        break
+
+      case 'decimal':
+        hints.push('Число, можно использовать дробную часть')
+        break
+
+      case 'date':
+        hints.push('Выберите дату')
+        break
+
+      case 'datetime':
+        hints.push('Выберите дату и время')
+        break
+
+      case 'boolean':
+        hints.push('Выберите Да или Нет')
+        break
+    }
+
+    // Числовые ограничения
+    if (
+      field.field_type === 'integer' ||
+      field.field_type === 'decimal'
+    ) {
+      const min = field.settings?.min
+      const max = field.settings?.max
+
+      if (min !== undefined && max !== undefined) {
+        hints.push(`от ${min} до ${max}`)
+      } else if (min !== undefined) {
+        hints.push(`не менее ${min}`)
+      } else if (max !== undefined) {
+        hints.push(`не более ${max}`)
+      }
+    }
+
+    // Обязательность поля
+    if (!field.required) {
+      hints.push('необязательное поле')
+    }
+
+    return hints.join(' · ')
+  }
+
   function handleRecordChange(fieldName, value) {
     setNewRecordValues((prev) => ({
       ...prev,
@@ -322,6 +377,10 @@ function TableDetail({ table, onBack }) {
                 <span className="required-mark"> *</span>
               )}
             </label>
+
+            <p className="field-hint">
+              {getFieldHint(field)}
+            </p>
 
             {field.field_type === 'boolean' ? (
               <select
