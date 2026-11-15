@@ -2,6 +2,7 @@ import { useState } from 'react'
 import './App.css'
 import TableList from './components/TableList'
 import Login from './components/Login'
+import Settings from './components/Settings'
 
 
 function App() {
@@ -23,6 +24,7 @@ function App() {
 
     setIsAuthenticated(false)
   }
+
 
   return (
       <>
@@ -62,14 +64,9 @@ function App() {
                 </aside>
 
                 <main className="content">
-                  {activePage === 'tables' && <TableList/>}
+                  {activePage === 'tables' && <TableList />}
 
-                  {activePage === 'settings' && (
-                      <>
-                        <h2>Настройки</h2>
-                        <p>Здесь будут настройки пользователя.</p>
-                      </>
-                  )}
+                  {activePage === 'settings' && <Settings />}
                 </main>
               </div>
             </div>
