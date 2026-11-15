@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.core.exceptions import PermissionDenied, ValidationError
 
-from dataflow.services import create_record
+from dataflow.services.records import create_record
 from .config import data_table
 
 

@@ -3,8 +3,9 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 
 from dataflow.models import DataRecord, DataTable
-from dataflow.services import update_record
+
 from .config import data_table
+from ..services.records import update_record
 
 
 @pytest.mark.django_db

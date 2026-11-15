@@ -2,7 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from dataflow.models import DataRecord, DataTable
-from dataflow.services import delete_record
+from dataflow.services.records import delete_record
 from .config import data_table
 
 
