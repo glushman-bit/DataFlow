@@ -76,6 +76,26 @@ export async function createField(tableId, fieldData, token) {
 }
 
 
+export async function updateField(tableId, fieldId, fieldData, token) {
+  const response = await apiRequest(
+    `/api/tables/${tableId}/fields/${fieldId}/`,
+    {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(fieldData),
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error('Не удалось обновить поле.')
+  }
+
+  return response.json()
+}
+
+
 export async function getRecords(tableId, token) {
   const response = await apiRequest(`/api/tables/${tableId}/records/`)
 
