@@ -37,6 +37,7 @@ function TableDetail({ table, onBack }) {
 
         setFields(data)
         setRecords(recordsData)
+        setNewRecordValues(getInitialRecordValues(data))
 
       } catch (error) {
         setError(error.message)
@@ -82,6 +83,45 @@ function TableDetail({ table, onBack }) {
     }
 
     return inputTypes[fieldType] || 'text'
+  }
+
+  function getCurrentDateTime(fieldType) {
+    const now = new Date()
+
+    if (fieldType === 'date') {
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+
+      return `${year}-${month}-${day}`
+    }
+
+    if (fieldType === 'datetime') {
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+
+      return `${year}-${month}-${day}T${hours}:${minutes}`
+    }
+
+    return ''
+  }
+
+  function getInitialRecordValues(fields) {
+    const values = {}
+
+    fields.forEach(field => {
+      if (
+        field.settings?.auto_now &&
+        (field.field_type === 'date' || field.field_type === 'datetime')
+      ) {
+        values[field.name] = getCurrentDateTime(field.field_type)
+      }
+    })
+
+    return values
   }
 
   function getFieldHint(field) {
@@ -212,7 +252,7 @@ function TableDetail({ table, onBack }) {
       const newRecord = await createRecord(table.id, newRecordValues, token)
 
       setRecords([...records, newRecord])
-      setNewRecordValues({})
+      setNewRecordValues(getInitialRecordValues(fields))
     } catch (error) {
       if (error.details?.values) {
         setFieldErrors(error.details.values)
@@ -435,6 +475,11 @@ function TableDetail({ table, onBack }) {
                 }
                 min={field.settings?.min}
                 max={field.settings?.max}
+                maxLength={
+                  field.field_type === 'text'
+                    ? field.settings?.max_length
+                    : undefined
+                }
                 value={newRecordValues[field.name] ?? ''}
                 className={fieldErrors[field.name] ? 'input-error' : ''}
                 onChange={(event) =>
@@ -575,6 +620,11 @@ function TableDetail({ table, onBack }) {
                     }
                     min={field.settings?.min}
                     max={field.settings?.max}
+                    maxLength={
+                      field.field_type === 'text'
+                        ? field.settings?.max_length
+                        : undefined
+                    }
                     value={newRecordValues[field.name] ?? ''}
                     className={
                       editFieldErrors[field.name] ? 'input-error' : ''

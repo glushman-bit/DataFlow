@@ -100,6 +100,25 @@ function Settings() {
         }
       }
 
+      if (
+        editingField.field_type === 'date' ||
+        editingField.field_type === 'datetime'
+      ) {
+        if (editingField.min === '') {
+          delete settings.min
+        } else {
+          settings.min = editingField.min
+        }
+
+        if (editingField.max === '') {
+          delete settings.max
+        } else {
+          settings.max = editingField.max
+        }
+
+        settings.auto_now = editingField.auto_now
+      }
+
       const updatedField = await updateField(
         selectedTableId,
         editingField.id,
@@ -196,6 +215,7 @@ function Settings() {
                             decimal_places: field.settings?.decimal_places ?? 2,
                             min_length: field.settings?.min_length ?? '',
                             max_length: field.settings?.max_length ?? '',
+                            auto_now: field.settings?.auto_now ?? false,
                           })
                           setSaveError('')
                           setSaveSuccess('')
@@ -296,6 +316,88 @@ function Settings() {
                           />
                         </label>
                       </>
+                    )}
+
+                    {editingField.field_type === 'date' && (
+                      <>
+                        <label>
+                          Минимальная дата:
+                          <input
+                            type="date"
+                            value={editingField.min}
+                            onChange={event =>
+                              setEditingField({
+                                ...editingField,
+                                min: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          Максимальная дата:
+                          <input
+                            type="date"
+                            value={editingField.max}
+                            onChange={event =>
+                              setEditingField({
+                                ...editingField,
+                                max: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                      </>
+                    )}
+
+                    {editingField.field_type === 'datetime' && (
+                      <>
+                        <label>
+                          Минимальная дата и время:
+                          <input
+                            type="datetime-local"
+                            value={editingField.min}
+                            onChange={event =>
+                              setEditingField({
+                                ...editingField,
+                                min: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+
+                        <label>
+                          Максимальная дата и время:
+                          <input
+                            type="datetime-local"
+                            value={editingField.max}
+                            onChange={event =>
+                              setEditingField({
+                                ...editingField,
+                                max: event.target.value,
+                              })
+                            }
+                          />
+                        </label>
+                      </>
+                    )}
+
+                    {(editingField.field_type === 'date' ||
+                      editingField.field_type === 'datetime') && (
+                      <label>
+                        <input
+                          type="checkbox"
+                          checked={editingField.auto_now}
+                          onChange={event =>
+                            setEditingField({
+                              ...editingField,
+                              auto_now: event.target.checked,
+                            })
+                          }
+                        />
+                        Автоматически подставлять текущую{' '}
+                        {editingField.field_type === 'date' ? 'дату' : 'дату и время'}
+                      </label>
                     )}
 
                     <div className="form-actions">
