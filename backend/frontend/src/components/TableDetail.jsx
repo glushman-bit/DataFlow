@@ -230,7 +230,57 @@ function TableDetail({ table, onBack }) {
       return
     }
 
+    if (field.field_type === 'decimal' && value !== '') {
+      const decimalPlaces = field.settings?.decimal_places ?? 2
+
+      const parts = value.split('.')
+
+      if (parts.length > 1 && parts[1].length > decimalPlaces) {
+        return
+      }
+    }
+
+    if (field.field_type === 'integer' && value !== '') {
+      if (!/^-?\d*$/.test(value)) {
+        return
+      }
+    }
+
     handleRecordChange(field.name, value)
+
+    if (
+      (field.field_type === 'integer' ||
+        field.field_type === 'decimal') &&
+      value !== '' &&
+      Number.isFinite(Number(value))
+    ) {
+      let rangeError = ''
+
+      const min = field.settings?.min
+      const max = field.settings?.max
+      const numericValue = Number(value)
+
+      if (min !== undefined && numericValue < Number(min)) {
+        rangeError = `Минимальное значение — ${min}.`
+      }
+
+      if (max !== undefined && numericValue > Number(max)) {
+        rangeError = `Максимальное значение — ${max}.`
+      }
+
+      if (rangeError) {
+        const updateErrors = prev => ({
+          ...prev,
+          [field.name]: [rangeError],
+        })
+
+        if (editingRecordId !== null) {
+          setEditFieldErrors(updateErrors)
+        } else {
+          setFieldErrors(updateErrors)
+        }
+      }
+    }
   }
 
   function handleEditRecord(record) {
@@ -470,8 +520,8 @@ function TableDetail({ table, onBack }) {
                   field.field_type === 'integer'
                     ? 1
                     : field.field_type === 'decimal'
-                      ? 'any'
-                      : undefined
+                      ? `0.${'0'.repeat((field.settings?.decimal_places ?? 2) - 1)}1`
+                      : `1`
                 }
                 min={field.settings?.min}
                 max={field.settings?.max}
@@ -482,6 +532,14 @@ function TableDetail({ table, onBack }) {
                 }
                 value={newRecordValues[field.name] ?? ''}
                 className={fieldErrors[field.name] ? 'input-error' : ''}
+                onKeyDown={event => {
+                  if (
+                    field.field_type === 'integer' &&
+                    (event.key === '.' || event.key === ',')
+                  ) {
+                    event.preventDefault()
+                  }
+                }}
                 onChange={(event) =>
                   handleTypedRecordChange(field, event.target.value)
                 }
@@ -615,8 +673,8 @@ function TableDetail({ table, onBack }) {
                       field.field_type === 'integer'
                         ? 1
                         : field.field_type === 'decimal'
-                          ? 'any'
-                          : undefined
+                          ? `0.${'0'.repeat((field.settings?.decimal_places ?? 2) - 1)}1`
+                          : `1`
                     }
                     min={field.settings?.min}
                     max={field.settings?.max}
@@ -629,6 +687,14 @@ function TableDetail({ table, onBack }) {
                     className={
                       editFieldErrors[field.name] ? 'input-error' : ''
                     }
+                    onKeyDown={event => {
+                      if (
+                        field.field_type === 'integer' &&
+                        (event.key === '.' || event.key === ',')
+                      ) {
+                        event.preventDefault()
+                      }
+                    }}
                     onChange={(event) =>
                       handleTypedRecordChange(field, event.target.value)
                     }
