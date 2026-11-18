@@ -281,6 +281,45 @@ function TableDetail({ table, onBack }) {
         }
       }
     }
+      // Проверка диапазона даты и времени
+
+    if (
+      (field.field_type === 'date' ||
+        field.field_type === 'datetime') &&
+      value !== ''
+      ) {
+      let rangeError = ''
+
+      const min = field.settings?.min
+      const max = field.settings?.max
+
+      if (min && value < min) {
+        rangeError =
+          field.field_type === 'date'
+            ? `Дата не может быть раньше ${min}.`
+            : `Дата и время не могут быть раньше ${min}.`
+      }
+
+      if (max && value > max) {
+        rangeError =
+          field.field_type === 'date'
+            ? `Дата не может быть позже ${max}.`
+            : `Дата и время не могут быть позже ${max}.`
+      }
+
+      if (rangeError) {
+        const updateErrors = prev => ({
+          ...prev,
+          [field.name]: [rangeError],
+        })
+
+        if (editingRecordId !== null) {
+          setEditFieldErrors(updateErrors)
+        } else {
+          setFieldErrors(updateErrors)
+        }
+      }
+    }
   }
 
   function handleEditRecord(record) {
