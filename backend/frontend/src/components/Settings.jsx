@@ -65,6 +65,62 @@ function Settings() {
     setSaveError('')
     setSaveSuccess('')
 
+    if (
+      editingField.min !== '' &&
+      editingField.max !== '' &&
+      Number(editingField.min) > Number(editingField.max)
+    ) {
+      setSaveError(
+        'Минимальное значение не может быть больше максимального.'
+      )
+      setSaving(false)
+      return
+    }
+
+    if (
+      editingField.field_type === 'text' &&
+      editingField.min_length !== '' &&
+      editingField.max_length !== '' &&
+      Number(editingField.min_length) > Number(editingField.max_length)
+    ) {
+      setSaveError(
+        'Минимальная длина текста не может быть больше максимальной.'
+      )
+      setSaving(false)
+      return
+    }
+
+    if (
+      editingField.field_type === 'decimal' &&
+      (
+        editingField.decimal_places === '' ||
+        !Number.isInteger(Number(editingField.decimal_places)) ||
+        Number(editingField.decimal_places) < 0
+      )
+    ) {
+      setSaveError(
+        'Количество знаков после запятой должно быть целым неотрицательным числом.'
+      )
+      setSaving(false)
+      return
+    }
+
+    if (
+      editingField.field_type === 'integer' &&
+      (
+        (editingField.min !== '' &&
+          !Number.isInteger(Number(editingField.min))) ||
+        (editingField.max !== '' &&
+          !Number.isInteger(Number(editingField.max)))
+      )
+    ) {
+      setSaveError(
+        'Минимальное и максимальное значения должны быть целыми числами.'
+      )
+      setSaving(false)
+      return
+    }
+
     try {
       const settings = {
         ...(editingField.settings || {}),
