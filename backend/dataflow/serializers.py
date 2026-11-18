@@ -1,4 +1,5 @@
 from decimal import Decimal
+from datetime import date, datetime
 
 from rest_framework import serializers
 from dataflow.models import DataTable, DataField, DataRecord
@@ -33,6 +34,146 @@ class DataFieldSerializer(serializers.ModelSerializer):
             "created_at",
         ]
         read_only_fields = ["id", "created_at",]
+
+
+    def validate_settings(self, value):
+        return value
+
+
+    def validate(self, attrs):
+        """Валидирование полей."""
+
+        field_type = attrs.get(
+            'field_type',
+            self.instance.field_type if self.instance else None
+        )
+
+        settings = attrs.get(
+            'settings',
+            self.instance.settings if self.instance else {}
+        )
+
+        min_value = settings.get('min')
+        max_value = settings.get('max')
+
+        if field_type in ('integer', 'decimal'):
+            for name, value in (
+                ('min', min_value),
+                ('max', max_value),
+            ):
+                if value is not None and (
+                    isinstance(value, bool) or
+                    not isinstance(value, (int, float))
+                ):
+                    raise serializers.ValidationError({
+                        'settings': (
+                            f'Ограничение {name} должно быть числом.'
+                        )
+                    })
+
+        if field_type in ('date', 'datetime'):
+            for name, value in (
+                ('min', min_value),
+                ('max', max_value),
+            ):
+                if value is None:
+                    continue
+
+                try:
+                    if not isinstance(value, str):
+                        raise ValueError
+
+                    if field_type == 'date':
+                        date.fromisoformat(value)
+                    else:
+                        datetime.fromisoformat(value)
+
+                except (ValueError, TypeError):
+                    raise serializers.ValidationError({
+                        'settings': (
+                            f'Ограничение {name} содержит некорректную дату.'
+                        )
+                    })
+
+        if field_type == 'integer':
+            for name, value in (
+                ('min', min_value),
+                ('max', max_value),
+            ):
+                if value is not None and (
+                    isinstance(value, bool) or
+                    not isinstance(value, int)
+                ):
+                    raise serializers.ValidationError({
+                        'settings': (
+                        f'Ограничение {name} должно быть целым числом.'
+                    )
+                })
+
+        if (
+            min_value is not None and
+            max_value is not None and
+            min_value > max_value
+        ):
+            raise serializers.ValidationError({
+                'settings': 'Минимальное значение не может превышать максимальное.'
+            })
+
+        if field_type == 'text':
+            min_length = settings.get('min_length')
+            max_length = settings.get('max_length')
+
+            for name, value in (
+                ('min_length', min_length),
+                ('max_length', max_length),
+            ):
+                if value is not None and (
+                    isinstance(value, bool) or
+                    not isinstance(value, int) or
+                    value < 0
+                ):
+                    raise serializers.ValidationError({
+                        'settings': (
+                            f'{name} должно быть целым неотрицательным числом.'
+                        )
+                    })
+
+            if (
+                min_length is not None and
+                max_length is not None and
+                min_length > max_length
+            ):
+                raise serializers.ValidationError({
+                    'settings': (
+                        'Минимальная длина текста не может превышать максимальную.'
+                    )
+                })
+
+        if field_type == 'decimal':
+            decimal_places = settings.get('decimal_places')
+
+            if decimal_places is not None and (
+                    isinstance(decimal_places, bool) or
+                    not isinstance(decimal_places, int) or
+                    decimal_places < 0
+            ):
+                raise serializers.ValidationError({
+                    'settings': (
+                        'Количество знаков после запятой должно быть '
+                        'целым неотрицательным числом.'
+                    )
+                })
+
+        if field_type in ('date', 'datetime'):
+            if (
+                'auto_now' in settings and
+                not isinstance(settings['auto_now'], bool)
+            ):
+                raise serializers.ValidationError({
+                    'settings': 'Параметр auto_now должен быть true или false.'
+                })
+
+        return attrs
 
 
 class DataRecordSerializer(serializers.ModelSerializer):
