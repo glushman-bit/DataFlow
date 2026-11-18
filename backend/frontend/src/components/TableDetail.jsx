@@ -559,7 +559,7 @@ function TableDetail({ table, onBack }) {
                   field.field_type === 'integer'
                     ? 1
                     : field.field_type === 'decimal'
-                      ? `0.${'0'.repeat((field.settings?.decimal_places ?? 2) - 1)}1`
+                      ? 10 ** -(field.settings?.decimal_places ?? 2)
                       : `1`
                 }
                 min={field.settings?.min}
@@ -712,7 +712,7 @@ function TableDetail({ table, onBack }) {
                       field.field_type === 'integer'
                         ? 1
                         : field.field_type === 'decimal'
-                          ? `0.${'0'.repeat((field.settings?.decimal_places ?? 2) - 1)}1`
+                          ? 10 ** -(field.settings?.decimal_places ?? 2)
                           : `1`
                     }
                     min={field.settings?.min}
