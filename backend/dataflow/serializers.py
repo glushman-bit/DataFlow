@@ -39,7 +39,6 @@ class DataFieldSerializer(serializers.ModelSerializer):
     def validate_settings(self, value):
         return value
 
-
     def validate(self, attrs):
         """Валидирование полей."""
 
@@ -53,24 +52,38 @@ class DataFieldSerializer(serializers.ModelSerializer):
             self.instance.settings if self.instance else {}
         )
 
+        # Объединяем настройки при частичном обновлении.
+        if self.instance and self.partial and 'settings' in attrs:
+            settings = {
+                **self.instance.settings,
+                **settings,
+            }
+
+            attrs['settings'] = settings
+
         min_value = settings.get('min')
         max_value = settings.get('max')
 
+        # Проверка числовых ограничений.
         if field_type in ('integer', 'decimal'):
             for name, value in (
                 ('min', min_value),
                 ('max', max_value),
             ):
-                if value is not None and (
-                    isinstance(value, bool) or
-                    not isinstance(value, (int, float))
-                ):
+                if value is None:
+                    continue
+
+                if isinstance(value, bool) or not isinstance(value, (int, float)):
                     raise serializers.ValidationError({
-                        'settings': (
-                            f'Ограничение {name} должно быть числом.'
-                        )
+                        'settings': f'Ограничение {name} должно быть числом.'
                     })
 
+                if field_type == 'integer' and not isinstance(value, int):
+                    raise serializers.ValidationError({
+                        'settings': f'Ограничение {name} должно быть целым числом.'
+                    })
+
+        # Проверка ограничений даты и времени.
         if field_type in ('date', 'datetime'):
             for name, value in (
                 ('min', min_value),
@@ -95,30 +108,33 @@ class DataFieldSerializer(serializers.ModelSerializer):
                         )
                     })
 
-        if field_type == 'integer':
-            for name, value in (
-                ('min', min_value),
-                ('max', max_value),
-            ):
-                if value is not None and (
-                    isinstance(value, bool) or
-                    not isinstance(value, int)
-                ):
+        # Проверка порядка минимального и максимального значений.
+        if min_value is not None and max_value is not None:
+            if field_type == 'datetime':
+                min_comparable = datetime.fromisoformat(min_value)
+                max_comparable = datetime.fromisoformat(max_value)
+
+                min_has_timezone = min_comparable.utcoffset() is not None
+                max_has_timezone = max_comparable.utcoffset() is not None
+
+                if min_has_timezone != max_has_timezone:
                     raise serializers.ValidationError({
                         'settings': (
-                        f'Ограничение {name} должно быть целым числом.'
-                    )
+                            'Ограничения min и max должны оба содержать '
+                            'часовой пояс или оба не содержать его.'
+                        )
+                    })
+
+            else:
+                min_comparable = min_value
+                max_comparable = max_value
+
+            if min_comparable > max_comparable:
+                raise serializers.ValidationError({
+                    'settings': 'Минимальное значение не может превышать максимальное.'
                 })
 
-        if (
-            min_value is not None and
-            max_value is not None and
-            min_value > max_value
-        ):
-            raise serializers.ValidationError({
-                'settings': 'Минимальное значение не может превышать максимальное.'
-            })
-
+        # Проверка настроек текстового поля.
         if field_type == 'text':
             min_length = settings.get('min_length')
             max_length = settings.get('max_length')
@@ -133,9 +149,7 @@ class DataFieldSerializer(serializers.ModelSerializer):
                     value < 0
                 ):
                     raise serializers.ValidationError({
-                        'settings': (
-                            f'{name} должно быть целым неотрицательным числом.'
-                        )
+                        'settings': f'{name} должно быть целым неотрицательным числом.'
                     })
 
             if (
@@ -144,11 +158,10 @@ class DataFieldSerializer(serializers.ModelSerializer):
                 min_length > max_length
             ):
                 raise serializers.ValidationError({
-                    'settings': (
-                        'Минимальная длина текста не может превышать максимальную.'
-                    )
+                    'settings': 'Минимальная длина текста не может превышать максимальную.'
                 })
 
+        # Проверка количества знаков после запятой.
         if field_type == 'decimal':
             decimal_places = settings.get('decimal_places')
 
@@ -164,6 +177,7 @@ class DataFieldSerializer(serializers.ModelSerializer):
                     )
                 })
 
+        # Проверка автоматической установки даты и времени.
         if field_type in ('date', 'datetime'):
             if (
                 'auto_now' in settings and
@@ -174,6 +188,19 @@ class DataFieldSerializer(serializers.ModelSerializer):
                 })
 
         return attrs
+
+    def update(self, instance, validated_data):
+        """Обновление полей."""
+
+        new_settings = validated_data.get('settings')
+
+        if new_settings is not None:
+            validated_data['settings'] = {
+                **instance.settings,
+                **new_settings,
+            }
+
+        return super().update(instance, validated_data)
 
 
 class DataRecordSerializer(serializers.ModelSerializer):
