@@ -157,4 +157,66 @@ class DataFieldViewSetTests(APITestCase):
 # - assertFalse(...exists()) — поля действительно больше нет в базе.
 # """
 
+    def test_data_field_create_invalid_settings(self):
+        """Проверка отклонения поля с некорректными настройками."""
+
+        data = {
+            "name": "event_time",
+            "label": "Время события",
+            "field_type": "datetime",
+            "required": False,
+            "order": 2,
+            "settings": {
+                "min": "2026-11-19T15:00:00+03:00",
+                "max": "2026-11-19T10:00:00+03:00",
+            },
+        }
+
+        response = self.client.post(
+            f"/api/tables/{self.table.id}/fields/",
+            data,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("settings", response.data)
+
+        self.assertFalse(
+            DataField.objects.filter(
+                table=self.table,
+                name="event_time",
+            ).exists()
+        )
+
+    def test_data_field_update_invalid_settings(self):
+        """Проверка отклонения некорректных настроек при обновлении."""
+
+        field = self.table.fields.get(name="title")
+
+        data = {
+            "field_type": "integer",
+            "settings": {
+                "min": 100,
+                "max": 10,
+            },
+        }
+
+        response = self.client.patch(
+            f"/api/tables/{self.table.id}/fields/{field.id}/",
+            data,
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("settings", response.data)
+
+        field.refresh_from_db()
+
+        self.assertEqual(field.field_type, "text")
+        self.assertEqual(field.settings, {})
+
+
+
+
+
 
