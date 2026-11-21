@@ -57,6 +57,20 @@ class DataFieldViewSet(viewsets.ModelViewSet):
 
         serializer.save(table=table)
 
+    def get_serializer_context(self):
+        """Передает таблицу в контекст сериализатора."""
+
+        context = super().get_serializer_context()
+
+        if not getattr(self, "swagger_fake_view", False):
+            context['table'] = get_object_or_404(
+                DataTable,
+                pk=self.kwargs['table_id'],
+                owner=self.request.user
+            )
+
+        return context
+
 
 class DataRecordViewSet(viewsets.ModelViewSet):
     """API для управления записями пользовательских таблиц."""
