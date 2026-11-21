@@ -219,7 +219,7 @@ class DataFieldSerializer(serializers.ModelSerializer):
                 'Техническое имя не должно превышать 50 символов.'
             )
 
-        if not re.fullmatch(r'[A-Za-z0-9_]*', value):
+        if not re.fullmatch(r'[a-z][a-z0-9_]*', value):
             raise serializers.ValidationError(
                 'Используйте только строчные латинские буквы, '
                 'цифры и символ _. Имя должно начинаться с буквы.'
