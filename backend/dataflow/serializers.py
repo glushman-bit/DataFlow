@@ -1,6 +1,8 @@
 from decimal import Decimal
 from datetime import date, datetime
 
+import re
+
 from rest_framework import serializers
 from dataflow.models import DataTable, DataField, DataRecord
 from dataflow.services.validation import validate_record_values
@@ -201,6 +203,86 @@ class DataFieldSerializer(serializers.ModelSerializer):
             }
 
         return super().update(instance, validated_data)
+
+    def validate_name(self, value):
+        """Проверяет техническое имя поля."""
+
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                'Техническое имя не может быть пустым.'
+            )
+
+        if len(value) > 50:
+            raise serializers.ValidationError(
+                'Техническое имя не должно превышать 50 символов.'
+            )
+
+        if not re.fullmatch(r'[A-Za-z0-9_]*', value):
+            raise serializers.ValidationError(
+                'Используйте только строчные латинские буквы, '
+                'цифры и символ _. Имя должно начинаться с буквы.'
+            )
+
+        table = (
+            self.instance.table
+            if self.instance
+            else self.context.get("table")
+        )
+
+        if table:
+            queryset = DataField.objects.filter(
+                table=table,
+                name=value,
+            )
+
+            if self.instance:
+                queryset = queryset.exclude(pk=self.instance.pk)
+
+            if queryset.exists():
+                raise serializers.ValidationError(
+                    'Поле с таким техническим именем уже существует.'
+                )
+
+        return value
+
+    def validate_label(self, value):
+        """Проверяет отображение названия поля."""
+
+        value = value.strip()
+
+        if not value:
+            raise serializers.ValidationError(
+                'Название поля не может быть пустым.'
+            )
+
+        if len(value) > 255:
+            raise serializers.ValidationError(
+                'Название поля не должно превышать 255 символов.'
+            )
+
+        table = (
+            self.instance.table
+            if self.instance
+            else self.context.get('table')
+        )
+
+        if table:
+            queryset = DataField.objects.filter(
+                table=table,
+                label__iexact=value,
+            )
+
+            if self.instance:
+                queryset = queryset.exclude(pk=self.instance.pk)
+
+            if queryset.exists():
+                raise serializers.ValidationError(
+                    'Поле с таким названием уже существует в этой таблице.'
+                )
+
+        return value
 
 
 class DataRecordSerializer(serializers.ModelSerializer):
