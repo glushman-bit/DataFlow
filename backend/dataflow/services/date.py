@@ -76,13 +76,29 @@ def validate_datetime(field, value):
     max_datetime = settings.get("max")
 
     if min_datetime:
-        if result < get_datetime_setting(min_datetime, "min"):
+        min_value = get_datetime_setting(min_datetime, "min")
+
+        if (result.tzinfo is None) != (min_value.tzinfo is None):
+            raise ValidationError(
+                "Дата и время и минимальное ограничение "
+                "должны иметь одинаковый формат часового пояса."
+            )
+
+        if result < min_value:
             raise ValidationError(
                 f"Дата и время не могут быть раньше {min_datetime}."
             )
 
     if max_datetime:
-        if result > get_datetime_setting(max_datetime, "max"):
+        max_value = get_datetime_setting(max_datetime, "max")
+
+        if (result.tzinfo is None) != (max_value.tzinfo is None):
+            raise ValidationError(
+                "Дата и время и максимальное ограничение "
+                "должны иметь одинаковый формат часового пояса."
+            )
+
+        if result > max_value:
             raise ValidationError(
                 f"Дата и время не могут быть позже {max_datetime}."
             )
