@@ -1,34 +1,11 @@
 from django.contrib.auth import get_user_model
-from rest_framework.test import APITestCase
 
 from dataflow.models import DataTable, DataField
+from dataflow.tests.config import DataFieldViewSetTests
 
 
-class DataFieldViewSetTests(APITestCase):
-
-    def setUp(self):
-        """Подготовка данных перед каждым тестом."""
-
-        User = get_user_model()
-
-        self.user = User.objects.create_user(
-            username="field_user",
-            password="test_password",
-        )
-
-        self.table = DataTable.objects.create(
-            owner=self.user,
-            name="Моя таблица",
-        )
-
-        DataField.objects.create(
-            table=self.table,
-            name="title",
-            label="Название",
-            field_type="text",
-        )
-
-        self.client.force_authenticate(user=self.user)
+class DataFieldTestFieldRecord(DataFieldViewSetTests):
+    """Класс проверки создания полей."""
 
     def test_data_field_list_authenticated(self):
         """Проверка получения списка полей."""
@@ -67,8 +44,7 @@ class DataFieldViewSetTests(APITestCase):
             f"/api/tables/{another_table.id}/fields/"
         )
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(response.status_code, 404)
 
 
     def test_data_field_create_authenticated(self):
@@ -214,9 +190,3 @@ class DataFieldViewSetTests(APITestCase):
 
         self.assertEqual(field.field_type, "text")
         self.assertEqual(field.settings, {})
-
-
-
-
-
-
