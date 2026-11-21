@@ -2,7 +2,7 @@ import pytest
 
 from dataflow.models import DataRecord, DataField
 from dataflow.serializers import DataRecordSerializer, DataFieldSerializer
-from .config import data_table
+from .config import data_table, data_field
 
 
 @pytest.mark.django_db
@@ -234,13 +234,3 @@ def test_data_field_serializer_invalid_type_settings(field_type, settings):
 
     assert not serializer.is_valid()
     assert "settings" in serializer.errors
-
-
-
-
-
-
-
-
-
-
