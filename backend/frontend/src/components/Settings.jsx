@@ -60,6 +60,14 @@ function Settings() {
     table => String(table.id) === selectedTableId
   )
 
+  function prepareDateTimeSetting(value) {
+    if (!value) return value
+
+    return new Date(value).toISOString()
+  }
+
+
+
   async function handleSaveField() {
     setSaving(true)
     setSaveError('')
@@ -163,13 +171,19 @@ function Settings() {
         if (editingField.min === '') {
           delete settings.min
         } else {
-          settings.min = editingField.min
+          settings.min =
+            editingField.field_type === 'datetime'
+              ? prepareDateTimeSetting(editingField.min)
+              : editingField.min
         }
 
         if (editingField.max === '') {
           delete settings.max
         } else {
-          settings.max = editingField.max
+          settings.max =
+            editingField.field_type === 'datetime'
+              ? prepareDateTimeSetting(editingField.max)
+              : editingField.max
         }
 
         settings.auto_now = editingField.auto_now
