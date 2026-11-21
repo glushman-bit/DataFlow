@@ -27,7 +27,8 @@ function TableDetail({ table, onBack }) {
   const [fieldErrors, setFieldErrors] = useState({})
   const [editFieldErrors, setEditFieldErrors] = useState({})
   const [editError, setEditError] = useState('')
-
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false)
+  const [isAddFieldModalOpen, setIsAddFieldModalOpen] = useState(false)
 
 
   useEffect(() => {
@@ -75,6 +76,7 @@ function TableDetail({ table, onBack }) {
       setNewFieldRequired(true)
       setNewFieldSettings({})
       setError('')
+      setIsAddFieldModalOpen(false)
     } catch (error) {
       setError(error.message)
     }
@@ -371,6 +373,8 @@ function TableDetail({ table, onBack }) {
 
       setRecords([...records, newRecord])
       setNewRecordValues(getInitialRecordValues(fields))
+      setIsAddModalOpen(false)
+
     } catch (error) {
       if (error.details?.values) {
         setFieldErrors(error.details.values)
@@ -461,82 +465,26 @@ function TableDetail({ table, onBack }) {
           <p>Загрузка данных...</p>
       ) : (
         <>
-          <h3>Добавить поле</h3>
+          <div className="section-heading">
+            <h3>Поля таблицы</h3>
 
-          <div className="field-form">
-            <input
-              type="text"
-              placeholder="Техническое имя (например, client)"
-              value={newFieldName}
-              onChange={(event) => setNewFieldName(event.target.value)}
-            />
-
-            <input
-              type="text"
-              placeholder="Название поля (например, Клиент)"
-              value={newFieldLabel}
-              onChange={(event) => setNewFieldLabel(event.target.value)}
-            />
-
-            <select
-              value={newFieldType}
-              onChange={(event) => setNewFieldType(event.target.value)}
+            <button
+              className="add-button"
+              onClick={() => {
+                setNewFieldName('')
+                setNewFieldLabel('')
+                setNewFieldType('text')
+                setNewFieldRequired(true)
+                setNewFieldSettings({})
+                setError('')
+                setIsAddFieldModalOpen(true)
+              }}
             >
-              <option value="text">Текст</option>
-              <option value="integer">Целое число</option>
-              <option value="decimal">Десятичное число</option>
-              <option value="date">Дата</option>
-              <option value="datetime">Дата и время</option>
-              <option value="boolean">Да / Нет</option>
-            </select>
-
-            <label className="field-required">
-              <input
-                type="checkbox"
-                checked={newFieldRequired}
-                onChange={(event) => setNewFieldRequired(event.target.checked)}
-              />
-              Обязательное поле
-            </label>
-
-            {newFieldType === 'integer' && (
-              <div className="field-settings">
-                <input
-                  type="number"
-                  placeholder="Минимальное значение"
-                  value={newFieldSettings.min ?? ''}
-                  onChange={(event) => {
-                    const value = event.target.value
-
-                    setNewFieldSettings((prev) => ({
-                      ...prev,
-                      min: value === '' ? undefined : value,
-                    }))
-                  }}
-                />
-
-                <input
-                  type="number"
-                  placeholder="Максимальное значение"
-                  value={newFieldSettings.max ?? ''}
-                  onChange={(event) => {
-                    const value = event.target.value
-
-                    setNewFieldSettings((prev) => ({
-                      ...prev,
-                      max: value === '' ? undefined : value,
-                    }))
-                  }}
-                />
-              </div>
-            )}
-
-            <button onClick={handleAddField}>
-              Добавить поле
+              + Добавить поле
             </button>
           </div>
 
-          <h3>Поля таблицы</h3>
+
 
           {fields.length === 0 ? (
             <p className="empty-state">В таблице пока нет полей.</p>
@@ -566,104 +514,18 @@ function TableDetail({ table, onBack }) {
             </div>
           )}
 
-          <h3>Добавить запись</h3>
-
-          <p className="required-hint">
-            <span className="required-mark">*</span> — обязательное поле
-          </p>
-
-          <div className="record-form">
-            {fields.map((field) => (
-              <div className="form-group" key={field.id}>
-
-                <label>
-                  {field.label}
-                  {field.required && (
-                    <span className="required-mark"> *</span>
-                  )}
-                </label>
-
-                <p className="field-hint">
-                  {getFieldHint(field)}
-                </p>
-
-                {field.field_type === 'boolean' ? (
-                  <select
-                    value={
-                      newRecordValues[field.name] === undefined ||
-                      newRecordValues[field.name] === ''
-                        ? ''
-                        : String(newRecordValues[field.name])
-                    }
-                    className={fieldErrors[field.name] ? 'input-error' : ''}
-                    onChange={(event) =>
-                      handleTypedRecordChange(field, event.target.value)
-                    }
-                  >
-                    <option value="">Выберите значение</option>
-                    <option value="true">Да</option>
-                    <option value="false">Нет</option>
-                  </select>
-                ) : (
-
-                  <input
-                    type={getInputType(field.field_type)}
-                    step={
-                      field.field_type === 'integer'
-                        ? 1
-                        : field.field_type === 'decimal'
-                          ? 10 ** -(field.settings?.decimal_places ?? 2)
-                          : `1`
-                    }
-                    min={field.settings?.min}
-                    max={field.settings?.max}
-                    maxLength={
-                      field.field_type === 'text'
-                        ? field.settings?.max_length
-                        : undefined
-                    }
-                    value={newRecordValues[field.name] ?? ''}
-                    className={fieldErrors[field.name] ? 'input-error' : ''}
-                    onKeyDown={event => {
-                      if (
-                        field.field_type === 'integer' &&
-                        (event.key === '.' || event.key === ',')
-                      ) {
-                        event.preventDefault()
-                      }
-                    }}
-                    onChange={(event) =>
-                      handleTypedRecordChange(field, event.target.value)
-                    }
-                  />
-                )}
-
-                {fieldErrors[field.name] && (
-                  <p className="field-error">
-                    {fieldErrors[field.name][0]}
-                  </p>
-                )}
-              </div>
-            ))}
-
-            <button
-                onClick={handleAddRecord}
-                disabled={isAddingRecord}
-            >
-              {isAddingRecord ? 'Добавление...' : 'Добавить запись'}
-            </button>
-
-            {editingRecordId !== null && (
-              <button
-                onClick={() => {
-                  setEditingRecordId(null)
-                  setNewRecordValues({})
-                }}
-              >
-                Отмена
-              </button>
-            )}
-          </div>
+          <button
+            className="add-button"
+            onClick={() => {
+              setNewRecordValues(getInitialRecordValues(fields))
+              setFieldErrors({})
+              setError('')
+              setIsAddModalOpen(true)
+            }}
+            disabled={fields.length === 0}
+          >
+            + Добавить запись
+          </button>
 
           <h3>Записи таблицы</h3>
 
@@ -721,6 +583,217 @@ function TableDetail({ table, onBack }) {
               </tbody>
             </table>
           )}
+
+        {isAddModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>Добавление записи</h3>
+
+              <p className="required-hint">
+                <span className="required-mark">*</span> — обязательное поле
+              </p>
+
+              <div className="record-form modal-record-form">
+                {fields.map((field) => (
+                  <div className="form-group" key={field.id}>
+                    <label>
+                      {field.label}
+                      {field.required && (
+                        <span className="required-mark"> *</span>
+                      )}
+                    </label>
+
+                    <p className="field-hint">
+                      {getFieldHint(field)}
+                    </p>
+
+                    {field.field_type === 'boolean' ? (
+                      <select
+                        value={
+                          newRecordValues[field.name] === undefined ||
+                          newRecordValues[field.name] === ''
+                            ? ''
+                            : String(newRecordValues[field.name])
+                        }
+                        className={fieldErrors[field.name] ? 'input-error' : ''}
+                        onChange={(event) =>
+                          handleTypedRecordChange(field, event.target.value)
+                        }
+                      >
+                        <option value="">Выберите значение</option>
+                        <option value="true">Да</option>
+                        <option value="false">Нет</option>
+                      </select>
+                    ) : (
+                      <input
+                        type={getInputType(field.field_type)}
+                        step={
+                          field.field_type === 'integer'
+                            ? 1
+                            : field.field_type === 'decimal'
+                              ? 10 ** -(field.settings?.decimal_places ?? 2)
+                              : 1
+                        }
+                        min={field.settings?.min}
+                        max={field.settings?.max}
+                        maxLength={
+                          field.field_type === 'text'
+                            ? field.settings?.max_length
+                            : undefined
+                        }
+                        value={newRecordValues[field.name] ?? ''}
+                        className={fieldErrors[field.name] ? 'input-error' : ''}
+                        onKeyDown={(event) => {
+                          if (
+                            field.field_type === 'integer' &&
+                            (event.key === '.' || event.key === ',')
+                          ) {
+                            event.preventDefault()
+                          }
+                        }}
+                        onChange={(event) =>
+                          handleTypedRecordChange(field, event.target.value)
+                        }
+                      />
+                    )}
+
+                    {fieldErrors[field.name] && (
+                      <p className="field-error">
+                        {fieldErrors[field.name][0]}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              {error && <p className="field-error">{error}</p>}
+
+              <div className="modal-actions">
+                <button
+                  className="cancel-button"
+                  onClick={() => {
+                    setIsAddModalOpen(false)
+                    setNewRecordValues(getInitialRecordValues(fields))
+                    setFieldErrors({})
+                    setError('')
+                  }}
+                >
+                  Отмена
+                </button>
+
+                <button
+                  className="save-button"
+                  onClick={handleAddRecord}
+                  disabled={isAddingRecord}
+                >
+                  {isAddingRecord ? 'Добавление...' : 'Добавить'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {isAddFieldModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>Добавление поля</h3>
+
+              <div className="field-form">
+                <input
+                  type="text"
+                  placeholder="Техническое имя (например, client)"
+                  value={newFieldName}
+                  onChange={(event) => setNewFieldName(event.target.value)}
+                />
+
+                <input
+                  type="text"
+                  placeholder="Название поля (например, Клиент)"
+                  value={newFieldLabel}
+                  onChange={(event) => setNewFieldLabel(event.target.value)}
+                />
+
+                <select
+                  value={newFieldType}
+                  onChange={(event) => {
+                    setNewFieldType(event.target.value)
+                    setNewFieldSettings({})
+                  }}
+                >
+                  <option value="text">Текст</option>
+                  <option value="integer">Целое число</option>
+                  <option value="decimal">Десятичное число</option>
+                  <option value="date">Дата</option>
+                  <option value="datetime">Дата и время</option>
+                  <option value="boolean">Да / Нет</option>
+                </select>
+
+                <label className="field-required">
+                  <input
+                    type="checkbox"
+                    checked={newFieldRequired}
+                    onChange={(event) => setNewFieldRequired(event.target.checked)}
+                  />
+                  Обязательное поле
+                </label>
+
+                {newFieldType === 'integer' && (
+                  <div className="field-settings">
+                    <input
+                      type="number"
+                      placeholder="Минимальное значение"
+                      value={newFieldSettings.min ?? ''}
+                      onChange={(event) => {
+                        const value = event.target.value
+
+                        setNewFieldSettings((prev) => ({
+                          ...prev,
+                          min: value === '' ? undefined : value,
+                        }))
+                      }}
+                    />
+
+                    <input
+                      type="number"
+                      placeholder="Максимальное значение"
+                      value={newFieldSettings.max ?? ''}
+                      onChange={(event) => {
+                        const value = event.target.value
+
+                        setNewFieldSettings((prev) => ({
+                          ...prev,
+                          max: value === '' ? undefined : value,
+                        }))
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+
+              {error && <p className="field-error">{error}</p>}
+
+              <div className="modal-actions">
+                <button
+                  className="cancel-button"
+                  onClick={() => {
+                    setIsAddFieldModalOpen(false)
+                    setError('')
+                  }}
+                >
+                  Отмена
+                </button>
+
+                <button
+                  className="save-button"
+                  onClick={handleAddField}
+                >
+                  Добавить
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
 
 
         {isEditModalOpen && (
