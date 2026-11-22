@@ -63,6 +63,24 @@ function getCurrentDateTime(fieldType) {
     return ''
   }
 
+function formatDateTime(value) {
+    if (!value) return ''
+
+    const date = new Date(value)
+
+    if (Number.isNaN(date.getTime())) {
+      return value
+    }
+
+    return date.toLocaleString('ru-RU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    })
+  }
+
 function getInitialRecordValues(fields) {
   const values = {}
 
@@ -724,7 +742,9 @@ function TableDetail({ table, onBack }) {
                             : record.values[field.name] === false
                               ? 'Нет'
                               : ''
-                          : record.values[field.name]}
+                          : field.field_type === 'datetime'
+                            ? formatDateTime(record.values[field.name])
+                            : record.values[field.name]}
                       </td>
                     ))}
 
@@ -1134,7 +1154,6 @@ function TableDetail({ table, onBack }) {
             </div>
           </div>
         )}
-
 
         {recordToDelete !== null && (
           <div className="modal-overlay">
