@@ -213,6 +213,7 @@ function TableDetail({ table, onBack }) {
       decimal: 'number',
       date: 'date',
       datetime: 'datetime-local',
+      phone: 'tel'
     }
 
     return inputTypes[fieldType] || 'text'
@@ -298,6 +299,10 @@ function TableDetail({ table, onBack }) {
 
       case 'datetime':
         hints.push('Выберите дату и время')
+        break
+
+      case 'phone':
+        hints.push('Международный формат, например +79991234567')
         break
 
       case 'boolean':
@@ -874,6 +879,7 @@ function TableDetail({ table, onBack }) {
                   <option value="decimal">Десятичное число</option>
                   <option value="date">Дата</option>
                   <option value="datetime">Дата и время</option>
+                  <option value="phone">Номер телефона</option>
                   <option value="boolean">Да / Нет</option>
                 </select>
 
