@@ -331,31 +331,36 @@ class DataRecordSerializer(serializers.ModelSerializer):
         return instance
 
     def to_internal_value(self, data):
-        """Объединяет существующие значения с переданными при PATCH."""
+        """Объединяет актуальные значения с переданными при PATCH."""
 
-        if self.instance is not None and self.partial:   # Проверяет, что мы обновляем существующую запись и запрос является PATCH.
-            current_values = self.instance.values.copy() # Копирует текущие значения записи.
-            new_values = data.get("values", {})    # Получает новые значения из запроса.
+        if self.instance is not None and self.partial:
+            table = self.context.get("table")
+
+            valid_field_names = set(
+                table.fields.values_list("name", flat=True)
+            )
+
+            current_values = {
+                name: value
+                for name, value in self.instance.values.items()
+                if name in valid_field_names
+            }
+
+            new_values = data.get("values", {})
 
             data = data.copy()
             data["values"] = {
                 **current_values,
                 **new_values,
-            }   # Объединяет словари. Если поле присутствует в обоих словарях, новое значение заменяет старое.
+            }
 
-        return super().to_internal_value(data)  # Передаёт полный словарь стандартной валидации DRF.
+        return super().to_internal_value(data)
 
-# """
-# Здесь:
-# 1. self.instance — существующая запись, которую обновляем.
-# 2. self.partial — признак частичного обновления (PATCH).
-# 3. current_values — копия старых значений.
-# 4. new_values — значения из запроса.
-# 5. **current_values и **new_values объединяют словари. Если ключ встречается дважды, побеждает значение из new_values.
-# 6. super().to_internal_value(data) передаёт объединённые данные стандартному механизму DRF для дальнейшей обработки и валидации.
-# Таким образом, PATCH не стирает поля, которые пользователь не передал.
-# """
-
+# Что изменилось:
+#     1. Получаем список актуальных технических имён полей таблицы.
+#     2. Из старой записи оставляем только значения существующих полей.
+#     3. Добавляем новые значения из запроса.
+#     4. Передаём результат стандартной проверке DRF.
 
     class Meta:
         model = DataRecord
