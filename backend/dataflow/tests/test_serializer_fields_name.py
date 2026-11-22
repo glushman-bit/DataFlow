@@ -15,6 +15,7 @@ from ..serializers import DataFieldSerializer
         "2client",
         "client.name",
         "client@name",
+        "     ",
     ],
 )
 def test_data_field_serializer_invalid_name(name):
@@ -38,6 +39,7 @@ def test_data_field_serializer_invalid_name(name):
         "client_name",
         "client2",
         "field123",
+        "  client  ",
     ],
 )
 def test_data_field_serializer_valid_name(name):
@@ -267,6 +269,22 @@ def test_data_field_serializer_update_duplicate_label(data_table):
         data={"label": "Клиент"},
         context={"table": data_table},
         partial=True,
+    )
+
+    assert not serializer.is_valid()
+    assert "label" in serializer.errors
+
+
+def test_data_field_serializer_empty_label(data_table):
+    """Проверка на пустую строку имени или строку из пробелов."""
+
+    serializer = DataFieldSerializer(
+        data={
+            "name": "client",
+            "label": "    ",
+            "field_type": "text",
+        },
+        context={"table": data_table},
     )
 
     assert not serializer.is_valid()

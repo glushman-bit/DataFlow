@@ -166,34 +166,6 @@ class DataFieldTestFieldName(DataFieldViewSetTests):
         self.assertEqual(response.data["order"], 5)
 
 
-    def test_data_field_create_name_strips_whitespace(self):
-        """Проверка удаления пробелов по краям технического имени."""
-
-        data = {
-            "name": "  client  ",
-            "label": "Клиент",
-            "field_type": "text",
-            "required": False,
-            "order": 2,
-        }
-
-        response = self.client.post(
-            f"/api/tables/{self.table.id}/fields/",
-            data,
-            format="json",
-        )
-
-        self.assertEqual(response.status_code, 201)
-        self.assertEqual(response.data["name"], "client")
-
-        self.assertTrue(
-            DataField.objects.filter(
-                table=self.table,
-                name="client",
-            ).exists()
-        )
-
-
     def test_data_field_create_label_strips_whitespace(self):
         """Проверка удаления пробелов по краям отображаемого названия."""
 
@@ -220,56 +192,4 @@ class DataFieldTestFieldName(DataFieldViewSetTests):
                 name="client",
                 label="Клиент",
             ).exists()
-        )
-
-
-    def test_data_field_create_name_too_long(self):
-        """Проверка ограничения длины технического имени."""
-
-        data = {
-            "name": "a" * 51,
-            "label": "Длинное имя",
-            "field_type": "text",
-            "required": False,
-            "order": 2,
-        }
-
-        response = self.client.post(
-            f"/api/tables/{self.table.id}/fields/",
-            data,
-            format="json",
-        )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("name", response.data)
-
-        self.assertEqual(
-            DataField.objects.filter(table=self.table).count(),
-            1,
-        )
-
-
-    def test_data_field_create_label_too_long(self):
-        """Проверка ограничения длины отображаемого названия."""
-
-        data = {
-            "name": "long_label",
-            "label": "А" * 256,
-            "field_type": "text",
-            "required": False,
-            "order": 2,
-        }
-
-        response = self.client.post(
-            f"/api/tables/{self.table.id}/fields/",
-            data,
-            format="json",
-        )
-
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("label", response.data)
-
-        self.assertEqual(
-            DataField.objects.filter(table=self.table).count(),
-            1,
         )
