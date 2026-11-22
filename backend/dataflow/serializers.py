@@ -15,6 +15,7 @@ class DataTableSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "name",
+            "description",
             "settings",
             "created_at",
             "updated_at",
@@ -23,6 +24,17 @@ class DataTableSerializer(serializers.ModelSerializer):
 
 
 class DataFieldSerializer(serializers.ModelSerializer):
+    """Класс работы с полями таблицы."""
+
+    name = serializers.CharField(
+        max_length=50,
+        trim_whitespace=False,
+    )
+    label = serializers.CharField(
+        max_length=255,
+        trim_whitespace=False,
+    )
+
     class Meta:
         model = DataField
         fields = [
@@ -214,11 +226,6 @@ class DataFieldSerializer(serializers.ModelSerializer):
                 'Техническое имя не может быть пустым.'
             )
 
-        if len(value) > 50:
-            raise serializers.ValidationError(
-                'Техническое имя не должно превышать 50 символов.'
-            )
-
         if not re.fullmatch(r'[a-z][a-z0-9_]*', value):
             raise serializers.ValidationError(
                 'Используйте только строчные латинские буквы, '
@@ -255,11 +262,6 @@ class DataFieldSerializer(serializers.ModelSerializer):
         if not value:
             raise serializers.ValidationError(
                 'Название поля не может быть пустым.'
-            )
-
-        if len(value) > 255:
-            raise serializers.ValidationError(
-                'Название поля не должно превышать 255 символов.'
             )
 
         table = (
