@@ -11,6 +11,35 @@ import {
 } from '../api/tables'
 
 
+function generateFieldName(label) {
+  const transliteration = {
+    а: 'a', б: 'b', в: 'v', г: 'g', д: 'd',
+    е: 'e', ё: 'yo', ж: 'zh', з: 'z', и: 'i',
+    й: 'y', к: 'k', л: 'l', м: 'm', н: 'n',
+    о: 'o', п: 'p', р: 'r', с: 's', т: 't',
+    у: 'u', ф: 'f', х: 'kh', ц: 'ts', ч: 'ch',
+    ш: 'sh', щ: 'shch', ъ: '', ы: 'y', ь: '',
+    э: 'e', ю: 'yu', я: 'ya',
+  }
+
+  let result = ''
+
+  for (const char of label.toLowerCase()) {
+    result += transliteration[char] ?? char
+  }
+
+  result = result
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  if (!result || /^[0-9]/.test(result)) {
+    result = `field_${result}`
+  }
+
+  return result
+}
+
+
 function TableDetail({ table, onBack }) {
   const [fields, setFields] = useState([])
   const [records, setRecords] = useState([])
@@ -820,24 +849,18 @@ function TableDetail({ table, onBack }) {
               <div className="field-form">
                 <input
                   type="text"
-                  placeholder="Техническое имя (например, client)"
-                  value={newFieldName}
-                  onChange={(event) => setNewFieldName(event.target.value)}
-                />
-                <p className="field-hint">
-                  Используйте строчные латинские буквы, цифры и _.
-                  Имя должно начинаться с буквы. Например: client_name.
-                </p>
-
-                <input
-                  type="text"
                   placeholder="Название поля (например, Клиент)"
                   value={newFieldLabel}
-                  onChange={(event) => setNewFieldLabel(event.target.value)}
+                  onChange={(event) => {
+                    const value = event.target.value
+
+                    setNewFieldLabel(value)
+                    setNewFieldName(generateFieldName(value))
+                  }}
                 />
-                <p className="field-hint">
-                  Название поля отображается пользователю. Можно использовать кириллицу.
-                </p>
+                {/*<p className="field-hint">*/}
+                {/*  Можно использовать кириллицу.*/}
+                {/*</p>*/}
 
                 <select
                   value={newFieldType}
@@ -927,16 +950,7 @@ function TableDetail({ table, onBack }) {
 
               <div className="field-form">
                 <label>
-                  Техническое имя (латиница)
-                  <input
-                    type="text"
-                    placeholder="Техническое имя"
-                    value={editFieldName}
-                    onChange={(event) => setEditFieldName(event.target.value)}
-                  />
-                </label>
-                <label>
-                  Название поля (отображается пользователю)
+                  Название поля
                   <input
                     type="text"
                     placeholder="Название поля"
