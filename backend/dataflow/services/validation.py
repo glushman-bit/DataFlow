@@ -6,6 +6,7 @@ from .email import validate_email_value
 from .numeric import validate_integer, validate_decimal
 from .text import validate_text
 from .phone import validate_phone
+from .url import validate_url_value
 
 
 def validate_record_values(table, values):
@@ -85,6 +86,9 @@ def validate_field_value(field, value):
 
     if field.field_type == "email":
         return validate_email_value(field, value)
+
+    if field.field_type == "url":
+        return validate_url_value(field, value)
 
     raise ValidationError("Неизвестный тип поля.")
 
