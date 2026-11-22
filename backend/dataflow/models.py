@@ -10,6 +10,7 @@ class FieldType(models.TextChoices):
     DATETIME = "datetime", "Дата и время"
     BOOLEAN = "boolean", "Да / Нет"
     PHONE = "phone", "Номер телефона"
+    EMAIL = "email", "Электронная почта"
 
 
 class DataTable(models.Model):
