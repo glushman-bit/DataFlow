@@ -2,6 +2,7 @@ from django.core.exceptions import ValidationError
 
 from .boolean import validate_boolean
 from .date import validate_date, validate_datetime
+from .email import validate_email_value
 from .numeric import validate_integer, validate_decimal
 from .text import validate_text
 from .phone import validate_phone
@@ -81,6 +82,9 @@ def validate_field_value(field, value):
 
     if field.field_type == "phone":
         return validate_phone(field, value)
+
+    if field.field_type == "email":
+        return validate_email_value(field, value)
 
     raise ValidationError("Неизвестный тип поля.")
 
