@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import TableDetail from './TableDetail'
-import { getTables, createTable } from '../api/tables'
+import { getTables, createTable, deleteTable } from '../api/tables'
 
 
 function TableList() {
   const [tables, setTables] = useState([])
   const [selectedTable, setSelectedTable] = useState(null)
   const [newTableName, setNewTableName] = useState('')
+  const [newTableDescription, setNewTableDescription] = useState('')
+  const [tableToDelete, setTableToDelete] = useState(null)
 
   useEffect(() => {
     async function loadTables() {
@@ -40,11 +42,31 @@ function TableList() {
     }
 
     try {
-      const token = localStorage.getItem('access')
-      const newTable = await createTable(name, token)
+      const description = newTableDescription.trim()
+      const newTable = await createTable(name, description)
 
       setTables([...tables, newTable])
       setNewTableName('')
+      setNewTableDescription('')
+
+    } catch (error) {
+      console.error(error.message)
+    }
+  }
+
+  async function handleDeleteTable() {
+    if (!tableToDelete) {
+      return
+    }
+
+    try {
+      await deleteTable(tableToDelete.id)
+
+      setTables((prevTables) =>
+        prevTables.filter((table) => table.id !== tableToDelete.id)
+      )
+
+      setTableToDelete(null)
     } catch (error) {
       console.error(error.message)
     }
@@ -61,22 +83,86 @@ function TableList() {
           value={newTableName}
           onChange={(event) => setNewTableName(event.target.value)}
         />
+
+        <textarea
+          placeholder="Описание таблицы (необязательно)"
+          value={newTableDescription}
+          onChange={(event) => setNewTableDescription(event.target.value)}
+        />
+
         <button onClick={handleAddTable}>
           Создать таблицу
         </button>
       </div>
 
-      <div className="table-grid">
-        {tables.map((table) => (
-        <div
-          className="table-card"
-          key={table.id}
-          onClick={() => setSelectedTable(table)}
-        >
-          {table.name}
+      <div className="tables-list">
+        <div className="tables-header">
+          <span>Название таблицы</span>
+          <span>Описание</span>
+          <span>Действия</span>
         </div>
+
+        {tables.map((table) => (
+          <div className="table-row" key={table.id}>
+            <span
+              className="table-name"
+              onClick={() => setSelectedTable(table)}
+            >
+              {table.name}
+            </span>
+
+            <span className="table-description">
+              {table.description || '—'}
+            </span>
+
+            <div className="table-actions">
+              <button
+                className="delete-button"
+                onClick={(event) => {
+                  event.stopPropagation()
+                  setTableToDelete(table)
+                }}
+              >
+                Удалить
+              </button>
+            </div>
+          </div>
         ))}
+
+        {tableToDelete && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>Удаление таблицы</h3>
+
+              <p>
+                Вы действительно хотите удалить таблицу
+                «{tableToDelete.name}»?
+              </p>
+
+              <div className="modal-actions">
+                <button
+                  className="delete-button"
+                  onClick={handleDeleteTable}
+                >
+                  Удалить
+                </button>
+
+                <button
+                  className="secondary-button"
+                  onClick={() => setTableToDelete(null)}
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+
       </div>
+
+
+
     </div>
   )
 }
