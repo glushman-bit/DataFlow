@@ -797,3 +797,229 @@ button:hover {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* =========================================
+   17. Настройки
+   ========================================= */
+
+.settings {
+  width: 100%;
+  max-width: 1000px;
+}
+
+.settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.03);
+}
+
+.settings-section h3 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.settings-section > label {
+  margin-bottom: -12px;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.settings-section > select {
+  width: 100%;
+  max-width: 420px;
+  min-height: 40px;
+}
+
+.selected-table {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border);
+}
+
+.selected-table h4 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 16px;
+}
+
+
+.settings-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 14px 18px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+}
+
+.settings-field-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.settings-field-header > div {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  min-width: 0;
+}
+
+.settings-field strong {
+  color: var(--text);
+  font-size: 14px;
+}
+
+.settings-field p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.settings-field-header button {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  background: #dbeafe;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.settings-field-header button:hover {
+  background: #bfdbfe;
+}
+
+.settings-field .edit-field-form {
+  padding: 18px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+
+.settings-field button {
+  align-self: flex-start;
+  margin-top: 4px;
+  padding: 7px 14px;
+  background: #dbeafe;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.settings-field button:hover {
+  background: #bfdbfe;
+}
+
+.edit-field-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 22px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.edit-field-form h3 {
+  margin: 0 0 4px;
+  font-size: 16px;
+}
+
+.edit-field-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.edit-field-form input:not([type="checkbox"]) {
+  width: 100%;
+  max-width: 420px;
+  min-height: 38px;
+}
+
+.edit-field-form label:has(input[type="checkbox"]) {
+  flex-direction: row;
+  align-items: center;
+  gap: 9px;
+  font-weight: 500;
+}
+
+.edit-field-form input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary);
+}
+
+.edit-field-form .form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 9px;
+  margin-top: 4px;
+}
+
+.edit-field-form .form-actions button:first-child {
+  padding: 9px 18px;
+  font-weight: 600;
+}
+
+.edit-field-form .form-actions button:last-child {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+.edit-field-form .form-actions button:last-child:hover {
+  background: #cbd5e1;
+}
+
+.settings .error,
+.settings .success {
+  margin: 0;
+  font-size: 13px;
+}
+
+@media (max-width: 600px) {
+  .settings-section {
+    padding: 16px;
+  }
+
+  .settings-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .edit-field-form {
+    padding: 16px;
+  }
+
+  .settings-section > select,
+  .edit-field-form input:not([type="checkbox"]) {
+    max-width: 100%;
+  }
+}
+
+.settings-field {
+  padding: 12px;
+}
+
+.settings-field-header {
+  align-items: flex-start;
+}
