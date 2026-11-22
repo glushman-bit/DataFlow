@@ -11,6 +11,7 @@ class FieldType(models.TextChoices):
     BOOLEAN = "boolean", "Да / Нет"
     PHONE = "phone", "Номер телефона"
     EMAIL = "email", "Электронная почта"
+    URL = "url", "Ссылка"
 
 
 class DataTable(models.Model):
