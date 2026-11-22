@@ -1,9 +1,10 @@
 from django.core.exceptions import ValidationError
 
-from dataflow.services.boolean import validate_boolean
-from dataflow.services.date import validate_date, validate_datetime
-from dataflow.services.numeric import validate_integer, validate_decimal
-from dataflow.services.text import validate_text
+from .boolean import validate_boolean
+from .date import validate_date, validate_datetime
+from .numeric import validate_integer, validate_decimal
+from .text import validate_text
+from .phone import validate_phone
 
 
 def validate_record_values(table, values):
@@ -77,6 +78,9 @@ def validate_field_value(field, value):
 
     if field.field_type == "boolean":
         return validate_boolean(field, value)
+
+    if field.field_type == "phone":
+        return validate_phone(field, value)
 
     raise ValidationError("Неизвестный тип поля.")
 
