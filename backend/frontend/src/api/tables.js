@@ -29,7 +29,7 @@ export async function getTables(token) {
 }
 
 
-export async function createTable(name, token) {
+export async function createTable(name, description="") {
   const response = await apiRequest('/api/tables/', {
     method: 'POST',
     headers: {
@@ -37,6 +37,7 @@ export async function createTable(name, token) {
     },
     body: JSON.stringify({
       name: name,
+      description: description,
     }),
   })
 
@@ -48,7 +49,21 @@ export async function createTable(name, token) {
 }
 
 
-export async function getFields(tableId, token) {
+export async function deleteTable(tableId) {
+  const response = await apiRequest(
+    `/api/tables/${tableId}/`,
+    {
+      method: 'DELETE',
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error('Не удалось удалить таблицу.')
+  }
+}
+
+
+export async function getFields(tableId) {
   const response = await apiRequest(`/api/tables/${tableId}/fields/`)
 
   if (!response.ok) {
@@ -93,6 +108,20 @@ export async function updateField(tableId, fieldId, fieldData, token) {
   }
 
   return response.json()
+}
+
+
+export async function deleteField(tableId, fieldId, token) {
+  const response = await apiRequest(
+    `/api/tables/${tableId}/fields/${fieldId}/`,
+    {
+      method: 'DELETE',
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error('Не удалось удалить поле.')
+  }
 }
 
 
