@@ -96,15 +96,25 @@ export async function updateField(tableId, fieldId, fieldData, token) {
     `/api/tables/${tableId}/fields/${fieldId}/`,
     {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fieldData),
     }
   )
 
   if (!response.ok) {
-    throw new Error('Не удалось обновить поле.')
+    const errorData = await response.json()
+
+    const errorMessage = Object.entries(errorData)
+      .map(([field, messages]) => {
+        const text = Array.isArray(messages)
+          ? messages.join(' ')
+          : String(messages)
+
+        return `${field}: ${text}`
+      })
+      .join('\n')
+
+    throw new Error(errorMessage || 'Не удалось обновить поле.')
   }
 
   return response.json()

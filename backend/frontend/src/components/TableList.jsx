@@ -122,8 +122,9 @@ function TableList() {
                   event.stopPropagation()
                   setTableToDelete(table)
                 }}
+                title="Удалить запись"
               >
-                Удалить
+                ×
               </button>
             </div>
           </div>
@@ -141,17 +142,17 @@ function TableList() {
 
               <div className="modal-actions">
                 <button
-                  className="delete-button"
-                  onClick={handleDeleteTable}
-                >
-                  Удалить
-                </button>
-
-                <button
-                  className="secondary-button"
+                  className="cancel-button"
                   onClick={() => setTableToDelete(null)}
                 >
                   Отмена
+                </button>
+
+                <button
+                  className="confirm-button"
+                  onClick={handleDeleteTable}
+                >
+                  Удалить
                 </button>
               </div>
             </div>

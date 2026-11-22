@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import {
   getFields,
   createField,
+  updateField,
+  deleteField,
   getRecords,
   createRecord,
   updateRecord,
@@ -20,6 +22,17 @@ function TableDetail({ table, onBack }) {
   const [newFieldType, setNewFieldType] = useState('text')
   const [newRecordValues, setNewRecordValues] = useState({})
   const [recordToDelete, setRecordToDelete] = useState(null)
+  const [fieldToDelete, setFieldToDelete] = useState(null)
+  const [fieldToEdit, setFieldToEdit] = useState(null)
+  const [isEditFieldModalOpen, setIsEditFieldModalOpen] = useState(false)
+
+  const [editFieldName, setEditFieldName] = useState('')
+  const [editFieldLabel, setEditFieldLabel] = useState('')
+  const [editFieldType, setEditFieldType] = useState('text')
+  const [editFieldRequired, setEditFieldRequired] = useState(true)
+  const [editFieldSettings, setEditFieldSettings] = useState({})
+  const [editFieldError, setEditFieldError] = useState('')
+
   const [editingRecordId, setEditingRecordId] = useState(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [newFieldRequired, setNewFieldRequired] = useState(true)
@@ -81,6 +94,88 @@ function TableDetail({ table, onBack }) {
       setError(error.message)
     }
   }
+
+  async function handleDeleteField() {
+    if (!fieldToDelete) {
+      return
+    }
+
+    try {
+      await deleteField(table.id, fieldToDelete.id)
+
+      setFields((prevFields) =>
+        prevFields.filter((field) => field.id !== fieldToDelete.id)
+      )
+
+      setFieldToDelete(null)
+      setError('')
+    } catch (error) {
+      setError(error.message)
+    }
+  }
+
+  function handleEditField(field) {
+    setFieldToEdit(field)
+
+    setEditFieldName(field.name)
+    setEditFieldLabel(field.label)
+    setEditFieldType(field.field_type)
+    setEditFieldRequired(field.required)
+    setEditFieldSettings({ ...field.settings })
+
+    setEditFieldError('')
+    setIsEditFieldModalOpen(true)
+  }
+
+  async function handleUpdateField() {
+    if (!fieldToEdit) {
+      return
+    }
+
+    const fieldData = {
+      name: editFieldName.trim(),
+      label: editFieldLabel.trim(),
+      field_type: editFieldType,
+      required: editFieldRequired,
+      settings: editFieldSettings,
+    }
+
+    if (!/^[a-z][a-z0-9_]*$/.test(fieldData.name)) {
+      setEditFieldError(
+        'Техническое имя должно начинаться со строчной латинской буквы и содержать только латинские буквы, цифры и _.'
+      )
+      return
+    }
+
+    if (!/^[a-z][a-z0-9_]*$/.test(fieldData.name)) {
+      setError(
+        'Техническое имя должно начинаться со строчной латинской буквы и содержать только латинские буквы, цифры и _.'
+      )
+      return
+    }
+
+    try {
+      setEditFieldError('')
+
+      const updatedField = await updateField(
+        table.id,
+        fieldToEdit.id,
+        fieldData
+      )
+
+      setFields((prevFields) =>
+        prevFields.map((field) =>
+          field.id === updatedField.id ? updatedField : field
+        )
+      )
+
+      setFieldToEdit(null)
+      setIsEditFieldModalOpen(false)
+    } catch (error) {
+      setEditFieldError(error.message)
+    }
+  }
+
 
   function getInputType(fieldType) {
     const inputTypes = {
@@ -489,17 +584,23 @@ function TableDetail({ table, onBack }) {
           {fields.length === 0 ? (
             <p className="empty-state">В таблице пока нет полей.</p>
           ) : (
-            <div className="fields-grid">
+            <div className="fields-list">
+              <div className="fields-header">
+                <span>Название поля</span>
+                <span>Тип поля</span>
+                <span>Действия</span>
+              </div>
+
               {fields.map((field) => (
-                <div className="field-card" key={field.id}>
-                  <div className="field-card-title">
+                <div className="field-row" key={field.id}>
+                  <span className="field-name">
                     {field.label}
                     {field.required && (
                       <span className="required-mark"> *</span>
                     )}
-                  </div>
+                  </span>
 
-                  <div className="field-card-type">
+                  <span className="field-type">
                     {({
                       text: 'Текст',
                       integer: 'Целое число',
@@ -508,6 +609,24 @@ function TableDetail({ table, onBack }) {
                       datetime: 'Дата и время',
                       boolean: 'Да / Нет',
                     })[field.field_type] || field.field_type}
+                  </span>
+
+                  <div className="field-actions">
+                    <button
+                      className="edit-button"
+                      title="Редактировать поле"
+                      onClick={() => handleEditField(field)}
+                    >
+                      ✎
+                    </button>
+
+                    <button
+                      className="delete-button"
+                      title="Удалить поле"
+                      onClick={() => setFieldToDelete(field)}
+                    >
+                      ×
+                    </button>
                   </div>
                 </div>
               ))}
@@ -705,6 +824,10 @@ function TableDetail({ table, onBack }) {
                   value={newFieldName}
                   onChange={(event) => setNewFieldName(event.target.value)}
                 />
+                <p className="field-hint">
+                  Используйте строчные латинские буквы, цифры и _.
+                  Имя должно начинаться с буквы. Например: client_name.
+                </p>
 
                 <input
                   type="text"
@@ -712,6 +835,9 @@ function TableDetail({ table, onBack }) {
                   value={newFieldLabel}
                   onChange={(event) => setNewFieldLabel(event.target.value)}
                 />
+                <p className="field-hint">
+                  Название поля отображается пользователю. Можно использовать кириллицу.
+                </p>
 
                 <select
                   value={newFieldType}
@@ -794,7 +920,82 @@ function TableDetail({ table, onBack }) {
           </div>
         )}
 
+        {isEditFieldModalOpen && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>Редактирование поля</h3>
 
+              <div className="field-form">
+                <label>
+                  Техническое имя (латиница)
+                  <input
+                    type="text"
+                    placeholder="Техническое имя"
+                    value={editFieldName}
+                    onChange={(event) => setEditFieldName(event.target.value)}
+                  />
+                </label>
+                <label>
+                  Название поля (отображается пользователю)
+                  <input
+                    type="text"
+                    placeholder="Название поля"
+                    value={editFieldLabel}
+                    onChange={(event) => setEditFieldLabel(event.target.value)}
+                  />
+                </label>
+
+                <select
+                  value={editFieldType}
+                  onChange={(event) => {
+                    setEditFieldType(event.target.value)
+                    setEditFieldSettings({})
+                  }}
+                >
+                  <option value="text">Текст</option>
+                  <option value="integer">Целое число</option>
+                  <option value="decimal">Десятичное число</option>
+                  <option value="date">Дата</option>
+                  <option value="datetime">Дата и время</option>
+                  <option value="boolean">Да / Нет</option>
+                </select>
+
+                <label className="field-required">
+                  <input
+                    type="checkbox"
+                    checked={editFieldRequired}
+                    onChange={(event) => setEditFieldRequired(event.target.checked)}
+                  />
+                  Обязательное поле
+                </label>
+              </div>
+
+              {editFieldError && (
+                <p className="field-error">{editFieldError}</p>
+              )}
+
+              <div className="modal-actions">
+                <button
+                  className="cancel-button"
+                  onClick={() => {
+                    setIsEditFieldModalOpen(false)
+                    setFieldToEdit(null)
+                    setEditFieldError('')
+                  }}
+                >
+                  Отмена
+                </button>
+
+                <button
+                  className="save-button"
+                  onClick={handleUpdateField}
+                >
+                  Сохранить
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {isEditModalOpen && (
           <div className="modal-overlay">
@@ -923,6 +1124,36 @@ function TableDetail({ table, onBack }) {
             </div>
           </div>
         )}
+
+        {fieldToDelete !== null && (
+          <div className="modal-overlay">
+            <div className="modal">
+              <h3>Удаление поля</h3>
+
+              <p>
+                Вы действительно хотите удалить поле
+                «{fieldToDelete.label}»?
+              </p>
+
+              <div className="modal-actions">
+                <button
+                  className="cancel-button"
+                  onClick={() => setFieldToDelete(null)}
+                >
+                  Отмена
+                </button>
+
+                <button
+                  className="confirm-button"
+                  onClick={handleDeleteField}
+                >
+                  Удалить
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
 
         </>
       )}
