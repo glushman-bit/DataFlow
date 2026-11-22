@@ -213,7 +213,8 @@ function TableDetail({ table, onBack }) {
       decimal: 'number',
       date: 'date',
       datetime: 'datetime-local',
-      phone: 'tel'
+      phone: 'tel',
+      email: 'email',
     }
 
     return inputTypes[fieldType] || 'text'
@@ -303,6 +304,10 @@ function TableDetail({ table, onBack }) {
 
       case 'phone':
         hints.push('Международный формат, например +79991234567')
+        break
+
+      case 'email':
+        hints.push('Введите адрес, например user@example.com')
         break
 
       case 'boolean':
@@ -880,6 +885,7 @@ function TableDetail({ table, onBack }) {
                   <option value="date">Дата</option>
                   <option value="datetime">Дата и время</option>
                   <option value="phone">Номер телефона</option>
+                  <option value="email">Электронная почта</option>
                   <option value="boolean">Да / Нет</option>
                 </select>
 
