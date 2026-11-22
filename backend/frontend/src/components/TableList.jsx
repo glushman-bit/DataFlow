@@ -13,8 +13,7 @@ function TableList() {
   useEffect(() => {
     async function loadTables() {
       try {
-        const token = localStorage.getItem('access')
-        const data = await getTables(token)
+        const data = await getTables()
 
         setTables(data)
       } catch (error) {

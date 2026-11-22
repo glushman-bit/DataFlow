@@ -39,6 +39,44 @@ function generateFieldName(label) {
   return result
 }
 
+function getCurrentDateTime(fieldType) {
+    const now = new Date()
+
+    if (fieldType === 'date') {
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+
+      return `${year}-${month}-${day}`
+    }
+
+    if (fieldType === 'datetime') {
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const hours = String(now.getHours()).padStart(2, '0')
+      const minutes = String(now.getMinutes()).padStart(2, '0')
+
+      return `${year}-${month}-${day}T${hours}:${minutes}`
+    }
+
+    return ''
+  }
+
+function getInitialRecordValues(fields) {
+  const values = {}
+
+  fields.forEach(field => {
+    if (
+      field.settings?.auto_now &&
+      (field.field_type === 'date' || field.field_type === 'datetime')
+    ) {
+      values[field.name] = getCurrentDateTime(field.field_type)
+    }
+  })
+
+  return values
+}
 
 function TableDetail({ table, onBack }) {
   const [fields, setFields] = useState([])
@@ -79,9 +117,8 @@ function TableDetail({ table, onBack }) {
         setIsLoading(true)
         setError('')
 
-        const token = localStorage.getItem('access')
-        const data = await getFields(table.id, token)
-        const recordsData = await getRecords(table.id, token)
+        const data = await getFields(table.id)
+        const recordsData = await getRecords(table.id)
 
         setFields(data)
         setRecords(recordsData)
@@ -108,8 +145,7 @@ function TableDetail({ table, onBack }) {
     }
 
     try {
-      const token = localStorage.getItem('access')
-      const newField = await createField(table.id, fieldData, token)
+      const newField = await createField(table.id, fieldData)
 
       setFields([...fields, newField])
       setNewFieldName('')
@@ -215,34 +251,13 @@ function TableDetail({ table, onBack }) {
       datetime: 'datetime-local',
       phone: 'tel',
       email: 'email',
+      url: 'url',
     }
 
     return inputTypes[fieldType] || 'text'
   }
 
-  function getCurrentDateTime(fieldType) {
-    const now = new Date()
 
-    if (fieldType === 'date') {
-      const year = now.getFullYear()
-      const month = String(now.getMonth() + 1).padStart(2, '0')
-      const day = String(now.getDate()).padStart(2, '0')
-
-      return `${year}-${month}-${day}`
-    }
-
-    if (fieldType === 'datetime') {
-      const year = now.getFullYear()
-      const month = String(now.getMonth() + 1).padStart(2, '0')
-      const day = String(now.getDate()).padStart(2, '0')
-      const hours = String(now.getHours()).padStart(2, '0')
-      const minutes = String(now.getMinutes()).padStart(2, '0')
-
-      return `${year}-${month}-${day}T${hours}:${minutes}`
-    }
-
-    return ''
-  }
 
   function prepareRecordValues(values, fields) {
     const preparedValues = { ...values }
@@ -262,20 +277,7 @@ function TableDetail({ table, onBack }) {
   }
 
 
-  function getInitialRecordValues(fields) {
-    const values = {}
 
-    fields.forEach(field => {
-      if (
-        field.settings?.auto_now &&
-        (field.field_type === 'date' || field.field_type === 'datetime')
-      ) {
-        values[field.name] = getCurrentDateTime(field.field_type)
-      }
-    })
-
-    return values
-  }
 
   function getFieldHint(field) {
     const hints = []
@@ -312,6 +314,10 @@ function TableDetail({ table, onBack }) {
 
       case 'boolean':
         hints.push('Выберите Да или Нет')
+        break
+
+      case 'url':
+        hints.push('Введите ссылку, например https://example.com')
         break
     }
 
@@ -485,7 +491,15 @@ function TableDetail({ table, onBack }) {
 
   function handleEditRecord(record) {
     setEditingRecordId(record.id)
-    setNewRecordValues({ ...record.values })
+    const currentFieldNames = new Set(fields.map(field => field.name))
+
+    const currentValues = Object.fromEntries(
+      Object.entries(record.values || {}).filter(([fieldName]) =>
+        currentFieldNames.has(fieldName)
+      )
+    )
+
+    setNewRecordValues(currentValues)
     setEditFieldErrors({})
     setEditError('')
     setError('')
@@ -496,14 +510,12 @@ function TableDetail({ table, onBack }) {
     try {
       setIsAddingRecord(true)
 
-      const token = localStorage.getItem('access')
-
       setError('')
       setFieldErrors({})
 
       const preparedValues = prepareRecordValues(newRecordValues, fields)
 
-      const newRecord = await createRecord(table.id, preparedValues, token)
+      const newRecord = await createRecord(table.id, preparedValues)
 
       setRecords([...records, newRecord])
       setNewRecordValues(getInitialRecordValues(fields))
@@ -570,9 +582,7 @@ function TableDetail({ table, onBack }) {
 
   async function confirmDeleteRecord() {
     try {
-      const token = localStorage.getItem('access')
-
-      await deleteRecord(table.id, recordToDelete, token)
+      await deleteRecord(table.id, recordToDelete)
 
       setRecords(
         records.filter((record) => record.id !== recordToDelete)
@@ -887,6 +897,7 @@ function TableDetail({ table, onBack }) {
                   <option value="phone">Номер телефона</option>
                   <option value="email">Электронная почта</option>
                   <option value="boolean">Да / Нет</option>
+                  <option value="url">Ссылка</option>
                 </select>
 
                 <label className="field-required">

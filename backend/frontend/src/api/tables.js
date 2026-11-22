@@ -18,7 +18,7 @@ export async function login(username, password) {
 }
 
 
-export async function getTables(token) {
+export async function getTables() {
   const response = await apiRequest('/api/tables/')
 
   if (!response.ok) {
@@ -74,7 +74,7 @@ export async function getFields(tableId) {
 }
 
 
-export async function createField(tableId, fieldData, token) {
+export async function createField(tableId, fieldData) {
   const response = await apiRequest(`/api/tables/${tableId}/fields/`, {
     method: 'POST',
     headers: {
@@ -91,7 +91,7 @@ export async function createField(tableId, fieldData, token) {
 }
 
 
-export async function updateField(tableId, fieldId, fieldData, token) {
+export async function updateField(tableId, fieldId, fieldData) {
   const response = await apiRequest(
     `/api/tables/${tableId}/fields/${fieldId}/`,
     {
@@ -121,7 +121,7 @@ export async function updateField(tableId, fieldId, fieldData, token) {
 }
 
 
-export async function deleteField(tableId, fieldId, token) {
+export async function deleteField(tableId, fieldId) {
   const response = await apiRequest(
     `/api/tables/${tableId}/fields/${fieldId}/`,
     {
@@ -135,7 +135,7 @@ export async function deleteField(tableId, fieldId, token) {
 }
 
 
-export async function getRecords(tableId, token) {
+export async function getRecords(tableId) {
   const response = await apiRequest(`/api/tables/${tableId}/records/`)
 
   if (!response.ok) {
@@ -146,7 +146,7 @@ export async function getRecords(tableId, token) {
 }
 
 
-export async function createRecord(tableId, values, token) {
+export async function createRecord(tableId, values) {
   const response = await apiRequest(`/api/tables/${tableId}/records/`, {
     method: 'POST',
     headers: {
@@ -171,7 +171,7 @@ export async function createRecord(tableId, values, token) {
 }
 
 
-export async function deleteRecord(tableId, recordId, token) {
+export async function deleteRecord(tableId, recordId) {
   const response = await apiRequest(
     `/api/tables/${tableId}/records/${recordId}/`,
     {
