@@ -2,6 +2,7 @@ import pytest
 from django.core.exceptions import ValidationError
 
 from dataflow.models import DataField
+from dataflow.services.date import validate_datetime
 from dataflow.services.validation import validate_field_value
 
 
@@ -119,3 +120,43 @@ def test_validate_datetime_invalid_settings(settings):
 
     with pytest.raises(ValidationError):
         validate_field_value(field, "2026-11-15T15:00:00")
+
+
+def test_validate_datetime_min_timezone_mismatch():
+    """Проверяет несовпадение часовых поясов с минимальным ограничением."""
+
+    field = DataField(
+        field_type="datetime",
+        settings={
+            "min": "2026-05-01T12:00:00",
+        },
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="минимальное ограничение",
+    ):
+        validate_datetime(
+            field,
+            "2026-05-10T12:00:00+03:00",
+        )
+
+
+def test_validate_datetime_max_timezone_mismatch():
+    """Проверяет несовпадение часовых поясов с максимальным ограничением."""
+
+    field = DataField(
+        field_type="datetime",
+        settings={
+            "max": "2026-05-20T12:00:00",
+        },
+    )
+
+    with pytest.raises(
+        ValidationError,
+        match="максимальное ограничение",
+    ):
+        validate_datetime(
+            field,
+            "2026-05-10T12:00:00+03:00",
+        )
