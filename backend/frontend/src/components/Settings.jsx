@@ -22,7 +22,7 @@ function Settings() {
       try {
         const data = await getTables()
         setTables(data)
-      } catch (error) {
+      } catch {
         setError('Не удалось загрузить список таблиц.')
       } finally {
         setLoading(false)
@@ -33,8 +33,8 @@ function Settings() {
   }, [])
 
   useEffect(() => {
+
     if (!selectedTableId) {
-      setFields([])
       return
     }
 
@@ -45,7 +45,7 @@ function Settings() {
       try {
         const data = await getFields(selectedTableId)
         setFields(data)
-      } catch (error) {
+      } catch {
         setFieldsError('Не удалось загрузить поля таблицы.')
         setFields([])
       } finally {
@@ -203,7 +203,7 @@ function Settings() {
 
       setEditingField(null)
       setSaveSuccess('Настройки поля успешно сохранены.')
-    } catch (error) {
+    } catch {
       setSaveError('Не удалось сохранить настройки поля.')
     } finally {
       setSaving(false)
@@ -234,7 +234,10 @@ function Settings() {
             <select
               id="settings-table"
               value={selectedTableId}
-              onChange={event => setSelectedTableId(event.target.value)}
+              onChange={event => {
+                setFields([])
+                setSelectedTableId(event.target.value)
+              }}
             >
               <option value="">Выберите таблицу</option>
 
@@ -263,238 +266,247 @@ function Settings() {
 
             {!fieldsLoading && fields.length > 0 && (
               <>
+
                 <div className="settings-fields">
                   {fields.map(field => (
                     <div className="settings-field" key={field.id}>
-                      <strong>{field.label}</strong>
+                      <div className="settings-field-header">
+                        <div>
+                          <strong>{field.label}</strong>
+                          <p>Тип: {field.field_type}</p>
+                          <p>
+                            Обязательное: {field.required ? 'Да' : 'Нет'}
+                          </p>
+                        </div>
 
-                      <p>Тип: {field.field_type}</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (editingField?.id === field.id) {
+                              setEditingField(null)
+                              setSaveError('')
+                              return
+                            }
 
-                      <p>
-                        Обязательное:
-                        {field.required ? ' Да' : ' Нет'}
-                      </p>
+                            setEditingField({
+                              ...field,
+                              min: field.settings?.min ?? '',
+                              max: field.settings?.max ?? '',
+                              decimal_places: field.settings?.decimal_places ?? 2,
+                              min_length: field.settings?.min_length ?? '',
+                              max_length: field.settings?.max_length ?? '',
+                              auto_now: field.settings?.auto_now ?? false,
+                            })
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingField({
-                            ...field,
-                            min: field.settings?.min ?? '',
-                            max: field.settings?.max ?? '',
-                            decimal_places: field.settings?.decimal_places ?? 2,
-                            min_length: field.settings?.min_length ?? '',
-                            max_length: field.settings?.max_length ?? '',
-                            auto_now: field.settings?.auto_now ?? false,
-                          })
-                          setSaveError('')
-                          setSaveSuccess('')
-                        }}
-                      >
-                        Изменить
-                      </button>
+                            setSaveError('')
+                            setSaveSuccess('')
+                          }}
+                        >
+                          {editingField?.id === field.id ? 'Закрыть' : 'Изменить'}
+                        </button>
+                      </div>
+
+                      {editingField?.id === field.id && (
+                        <div className="edit-field-form">
+                          <h3>Настройки поля: {editingField.label}</h3>
+
+                          {(editingField.field_type === 'integer' ||
+                            editingField.field_type === 'decimal') && (
+                            <>
+                              <label>
+                                Минимальное значение:
+                                <input
+                                  type="number"
+                                  value={editingField.min}
+                                  onChange={event =>
+                                    setEditingField({
+                                      ...editingField,
+                                      min: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                Максимальное значение:
+                                <input
+                                  type="number"
+                                  value={editingField.max}
+                                  onChange={event =>
+                                    setEditingField({
+                                      ...editingField,
+                                      max: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                            </>
+                          )}
+
+                          {editingField.field_type === 'decimal' && (
+                            <label>
+                              Количество знаков после запятой:
+                              <input
+                                type="number"
+                                min="0"
+                                step="1"
+                                value={editingField.decimal_places}
+                                onChange={event =>
+                                  setEditingField({
+                                    ...editingField,
+                                    decimal_places: event.target.value,
+                                  })
+                                }
+                              />
+                            </label>
+                          )}
+
+                          {editingField.field_type === 'text' && (
+                            <>
+                              <label>
+                                Минимальная длина текста:
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  value={editingField.min_length}
+                                  onChange={event =>
+                                    setEditingField({
+                                      ...editingField,
+                                      min_length: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                Максимальная длина текста:
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  value={editingField.max_length}
+                                  onChange={event =>
+                                    setEditingField({
+                                      ...editingField,
+                                      max_length: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                            </>
+                          )}
+
+                          {editingField.field_type === 'date' && (
+                            <>
+                              <label>
+                                Минимальная дата:
+                                <input
+                                  type="date"
+                                  value={editingField.min}
+                                  onChange={event =>
+                                    setEditingField({
+                                      ...editingField,
+                                      min: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                Максимальная дата:
+                                <input
+                                  type="date"
+                                  value={editingField.max}
+                                  onChange={event =>
+                                    setEditingField({
+                                      ...editingField,
+                                      max: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                            </>
+                          )}
+
+                          {editingField.field_type === 'datetime' && (
+                            <>
+                              <label>
+                                Минимальная дата и время:
+                                <input
+                                  type="datetime-local"
+                                  value={editingField.min}
+                                  onChange={event =>
+                                    setEditingField({
+                                      ...editingField,
+                                      min: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+
+                              <label>
+                                Максимальная дата и время:
+                                <input
+                                  type="datetime-local"
+                                  value={editingField.max}
+                                  onChange={event =>
+                                    setEditingField({
+                                      ...editingField,
+                                      max: event.target.value,
+                                    })
+                                  }
+                                />
+                              </label>
+                            </>
+                          )}
+
+                          {(editingField.field_type === 'date' ||
+                            editingField.field_type === 'datetime') && (
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={editingField.auto_now}
+                                onChange={event =>
+                                  setEditingField({
+                                    ...editingField,
+                                    auto_now: event.target.checked,
+                                  })
+                                }
+                              />
+                              Автоматически подставлять текущую{' '}
+                              {editingField.field_type === 'date' ? 'дату' : 'дату и время'}
+                            </label>
+                          )}
+
+                          <div className="form-actions">
+                            <button
+                              type="button"
+                              onClick={handleSaveField}
+                              disabled={saving}
+                            >
+                              {saving ? 'Сохранение...' : 'Сохранить'}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingField(null)
+                                setSaveError('')
+                              }}
+                              disabled={saving}
+                            >
+                              Отмена
+                            </button>
+                          </div>
+
+                          {saveError && <p className="error">{saveError}</p>}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
 
-                {editingField && (
-                  <div className="edit-field-form">
-                    <h3>Настройки поля: {editingField.label}</h3>
-
-                    {(editingField.field_type === 'integer' ||
-                      editingField.field_type === 'decimal') && (
-                      <>
-                        <label>
-                          Минимальное значение:
-                          <input
-                            type="number"
-                            value={editingField.min}
-                            onChange={event =>
-                              setEditingField({
-                                ...editingField,
-                                min: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-
-                        <label>
-                          Максимальное значение:
-                          <input
-                            type="number"
-                            value={editingField.max}
-                            onChange={event =>
-                              setEditingField({
-                                ...editingField,
-                                max: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                      </>
-                    )}
-
-                    {editingField.field_type === 'decimal' && (
-                      <label>
-                        Количество знаков после запятой:
-                        <input
-                          type="number"
-                          min="0"
-                          step="1"
-                          value={editingField.decimal_places}
-                          onChange={event =>
-                            setEditingField({
-                              ...editingField,
-                              decimal_places: event.target.value,
-                            })
-                          }
-                        />
-                      </label>
-                    )}
-
-                    {editingField.field_type === 'text' && (
-                      <>
-                        <label>
-                          Минимальная длина текста:
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={editingField.min_length}
-                            onChange={event =>
-                              setEditingField({
-                                ...editingField,
-                                min_length: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-
-                        <label>
-                          Максимальная длина текста:
-                          <input
-                            type="number"
-                            min="0"
-                            step="1"
-                            value={editingField.max_length}
-                            onChange={event =>
-                              setEditingField({
-                                ...editingField,
-                                max_length: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                      </>
-                    )}
-
-                    {editingField.field_type === 'date' && (
-                      <>
-                        <label>
-                          Минимальная дата:
-                          <input
-                            type="date"
-                            value={editingField.min}
-                            onChange={event =>
-                              setEditingField({
-                                ...editingField,
-                                min: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-
-                        <label>
-                          Максимальная дата:
-                          <input
-                            type="date"
-                            value={editingField.max}
-                            onChange={event =>
-                              setEditingField({
-                                ...editingField,
-                                max: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                      </>
-                    )}
-
-                    {editingField.field_type === 'datetime' && (
-                      <>
-                        <label>
-                          Минимальная дата и время:
-                          <input
-                            type="datetime-local"
-                            value={editingField.min}
-                            onChange={event =>
-                              setEditingField({
-                                ...editingField,
-                                min: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-
-                        <label>
-                          Максимальная дата и время:
-                          <input
-                            type="datetime-local"
-                            value={editingField.max}
-                            onChange={event =>
-                              setEditingField({
-                                ...editingField,
-                                max: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                      </>
-                    )}
-
-                    {(editingField.field_type === 'date' ||
-                      editingField.field_type === 'datetime') && (
-                      <label>
-                        <input
-                          type="checkbox"
-                          checked={editingField.auto_now}
-                          onChange={event =>
-                            setEditingField({
-                              ...editingField,
-                              auto_now: event.target.checked,
-                            })
-                          }
-                        />
-                        Автоматически подставлять текущую{' '}
-                        {editingField.field_type === 'date' ? 'дату' : 'дату и время'}
-                      </label>
-                    )}
-
-                    <div className="form-actions">
-                      <button
-                        type="button"
-                        onClick={handleSaveField}
-                        disabled={saving}
-                      >
-                        {saving ? 'Сохранение...' : 'Сохранить'}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingField(null)
-                          setSaveError('')
-                        }}
-                        disabled={saving}
-                      >
-                        Отмена
-                      </button>
-                    </div>
-
-                    {saveError && <p className="error">{saveError}</p>}
-
-                  </div>
-                )}
 
                 {saveSuccess && <p className="success">{saveSuccess}</p>}
 
