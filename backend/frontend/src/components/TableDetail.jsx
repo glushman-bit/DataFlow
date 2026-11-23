@@ -102,15 +102,19 @@ function TableDetail({ table, onBack }) {
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [isAddingRecord, setIsAddingRecord] = useState(false)
+  const [isUpdatingRecord, setIsUpdatingRecord] = useState(false)
+  const [isUpdatingField, setIsUpdatingField] = useState(false)
+  const [isDeletingField, setIsDeletingField] = useState(false)
   const [newFieldName, setNewFieldName] = useState('')
   const [newFieldLabel, setNewFieldLabel] = useState('')
   const [newFieldType, setNewFieldType] = useState('text')
   const [newRecordValues, setNewRecordValues] = useState({})
   const [recordToDelete, setRecordToDelete] = useState(null)
+  const [isAddingField, setIsAddingField] = useState(false)
   const [fieldToDelete, setFieldToDelete] = useState(null)
   const [fieldToEdit, setFieldToEdit] = useState(null)
   const [isEditFieldModalOpen, setIsEditFieldModalOpen] = useState(false)
-
+  const [isDeletingRecord, setIsDeletingRecord] = useState(false)
   const [editFieldName, setEditFieldName] = useState('')
   const [editFieldLabel, setEditFieldLabel] = useState('')
   const [editFieldType, setEditFieldType] = useState('text')
@@ -163,6 +167,8 @@ function TableDetail({ table, onBack }) {
     }
 
     try {
+      setIsAddingField(true)
+
       const newField = await createField(table.id, fieldData)
 
       setFields([...fields, newField])
@@ -175,6 +181,8 @@ function TableDetail({ table, onBack }) {
       setIsAddFieldModalOpen(false)
     } catch (error) {
       setError(error.message)
+    } finally {
+      setIsAddingField(false)
     }
   }
 
@@ -184,6 +192,7 @@ function TableDetail({ table, onBack }) {
     }
 
     try {
+      setIsDeletingField(true)
       await deleteField(table.id, fieldToDelete.id)
 
       setFields((prevFields) =>
@@ -194,6 +203,8 @@ function TableDetail({ table, onBack }) {
       setError('')
     } catch (error) {
       setError(error.message)
+    } finally {
+      setIsDeletingField(false)
     }
   }
 
@@ -238,6 +249,7 @@ function TableDetail({ table, onBack }) {
     }
 
     try {
+      setIsUpdatingField(true)
       setEditFieldError('')
 
       const updatedField = await updateField(
@@ -254,8 +266,11 @@ function TableDetail({ table, onBack }) {
 
       setFieldToEdit(null)
       setIsEditFieldModalOpen(false)
+
     } catch (error) {
       setEditFieldError(error.message)
+    } finally {
+      setIsUpdatingField(false)
     }
   }
 
@@ -552,6 +567,7 @@ function TableDetail({ table, onBack }) {
 
   async function handleUpdateRecord() {
     try {
+      setIsUpdatingRecord(true)
       setEditFieldErrors({})
       setEditError('')
 
@@ -582,6 +598,8 @@ function TableDetail({ table, onBack }) {
       } else {
         setEditError(error.message)
       }
+    } finally {
+      setIsUpdatingRecord(false)
     }
   }
 
@@ -600,6 +618,8 @@ function TableDetail({ table, onBack }) {
 
   async function confirmDeleteRecord() {
     try {
+
+      setIsDeletingRecord(true)
       await deleteRecord(table.id, recordToDelete)
 
       setRecords(
@@ -610,6 +630,8 @@ function TableDetail({ table, onBack }) {
       setError('')
     } catch (error) {
       setError(error.message)
+    } finally {
+      setIsDeletingRecord(false)
     }
   }
 
@@ -898,9 +920,6 @@ function TableDetail({ table, onBack }) {
                     setNewFieldName(generateFieldName(value))
                   }}
                 />
-                {/*<p className="field-hint">*/}
-                {/*  Можно использовать кириллицу.*/}
-                {/*</p>*/}
 
                 <select
                   value={newFieldType}
@@ -971,6 +990,7 @@ function TableDetail({ table, onBack }) {
                     setIsAddFieldModalOpen(false)
                     setError('')
                   }}
+                  disabled={isAddingField}
                 >
                   Отмена
                 </button>
@@ -978,8 +998,9 @@ function TableDetail({ table, onBack }) {
                 <button
                   className="save-button"
                   onClick={handleAddField}
+                  disabled={isAddingField}
                 >
-                  Добавить
+                  {isAddingField ? 'Добавить...' : 'Добавить'}
                 </button>
               </div>
             </div>
@@ -1015,6 +1036,9 @@ function TableDetail({ table, onBack }) {
                   <option value="date">Дата</option>
                   <option value="datetime">Дата и время</option>
                   <option value="boolean">Да / Нет</option>
+                  <option value="phone">Номер телефона</option>
+                  <option value="email">Электронная почта</option>
+                  <option value="url">Ссылка</option>
                 </select>
 
                 <label className="field-required">
@@ -1046,8 +1070,9 @@ function TableDetail({ table, onBack }) {
                 <button
                   className="save-button"
                   onClick={handleUpdateField}
+                  disabled={isUpdatingField}
                 >
-                  Сохранить
+                  {isUpdatingField ? 'Сохранить...' : 'Сохранить'}
                 </button>
               </div>
             </div>
@@ -1147,8 +1172,9 @@ function TableDetail({ table, onBack }) {
                 <button
                   className="save-button"
                   onClick={handleUpdateRecord}
+                  disabled={isUpdatingRecord}
                 >
-                  Сохранить
+                  {isUpdatingRecord ? 'Сохранение...' : 'Сохранить'}
                 </button>
               </div>
             </div>
@@ -1173,8 +1199,9 @@ function TableDetail({ table, onBack }) {
                 <button
                   className="confirm-button"
                   onClick={confirmDeleteRecord}
+                  disabled={isDeletingRecord}
                 >
-                  Удалить
+                  {isDeletingRecord ? 'Удалить...' : 'Удалить'}
                 </button>
               </div>
             </div>
@@ -1202,8 +1229,9 @@ function TableDetail({ table, onBack }) {
                 <button
                   className="confirm-button"
                   onClick={handleDeleteField}
+                  disabled={isDeletingField}
                 >
-                  Удалить
+                  {isDeletingField ? 'Удаление...' : 'Удалить'}
                 </button>
               </div>
             </div>
