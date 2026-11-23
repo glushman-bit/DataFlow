@@ -1023,3 +1023,21 @@ button:hover {
 .settings-field-header {
   align-items: flex-start;
 }
+
+
+/* =========================================
+   18. Просроченные строки
+   ========================================= */
+
+.table-detail tbody tr.overdue-row {
+  background: #fee2e2;
+}
+
+.table-detail tbody tr.overdue-row td {
+  background: #fee2e2;
+}
+
+.table-detail tbody tr.overdue-row:hover,
+.table-detail tbody tr.overdue-row:hover td {
+  background: #fecaca;
+}
