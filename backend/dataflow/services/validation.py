@@ -91,23 +91,3 @@ def validate_field_value(field, value):
         return validate_url_value(field, value)
 
     raise ValidationError("Неизвестный тип поля.")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
