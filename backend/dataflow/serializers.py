@@ -78,6 +78,31 @@ class DataFieldSerializer(serializers.ModelSerializer):
         min_value = settings.get('min')
         max_value = settings.get('max')
 
+        # Проверка настроек контроля срока
+        if 'deadline' in settings:
+            deadline = settings['deadline']
+
+            if field_type not in ('date', 'datetime'):
+                raise serializers.ValidationError({
+                    'settings': (
+                        'Контроль срока доступен только для полей '
+                        'типа date и datetime.'
+                    )
+                })
+
+            if not isinstance(deadline, date):
+                raise serializers.ValidationError({
+                    'settings': 'Настройки контроля срока должны быть объектом.'
+                })
+
+            if (
+                'enabled' in deadline and
+                not isinstance(deadline['enabled'], bool)
+            ):
+                raise serializers.ValidationError({
+                    'settings': 'Параметр deadline.enabled должен быть true или false.'
+                })
+
         # Проверка числовых ограничений.
         if field_type in ('integer', 'decimal'):
             for name, value in (
