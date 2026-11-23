@@ -156,6 +156,68 @@ function TableDetail({ table, onBack }) {
     loadFields()
   }, [table.id])
 
+
+  useEffect(() => {
+    function handleEscape(event) {
+      if (event.key !== 'Escape') return
+
+      if (isEditModalOpen && !isUpdatingRecord) {
+        handleCancelEdit()
+        return
+      }
+
+      if (isAddModalOpen && !isAddingRecord) {
+        setIsAddModalOpen(false)
+        setNewRecordValues(getInitialRecordValues(fields))
+        setFieldErrors({})
+        setError('')
+        return
+      }
+
+      if (isAddFieldModalOpen && !isAddingField) {
+        setIsAddFieldModalOpen(false)
+        setError('')
+        return
+      }
+
+      if (isEditFieldModalOpen && !isUpdatingField) {
+        setIsEditFieldModalOpen(false)
+        setFieldToEdit(null)
+        setEditFieldError('')
+        return
+      }
+
+      if (recordToDelete !== null && !isDeletingRecord) {
+        setRecordToDelete(null)
+        return
+      }
+
+      if (fieldToDelete !== null && !isDeletingField) {
+        setFieldToDelete(null)
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+
+    return () => {
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [
+    isEditModalOpen,
+    isUpdatingRecord,
+    isAddModalOpen,
+    isAddingRecord,
+    isAddFieldModalOpen,
+    isAddingField,
+    isEditFieldModalOpen,
+    isUpdatingField,
+    recordToDelete,
+    isDeletingRecord,
+    fieldToDelete,
+    isDeletingField,
+    fields,
+  ])
+
   async function handleAddField() {
     const fieldData = {
       name: newFieldName.trim(),
@@ -1226,8 +1288,18 @@ function TableDetail({ table, onBack }) {
         )}
 
         {recordToDelete !== null && (
-          <div className="modal-overlay">
-            <div className="modal">
+          <div
+            className="modal-overlay"
+            onClick={() => {
+              if (!isDeletingRecord) {
+                setRecordToDelete(null)
+              }
+            }}
+          >
+            <div
+              className="modal"
+              onClick={(event) => event.stopPropagation()}
+            >
               <h3>Удаление записи</h3>
 
               <p>Вы действительно хотите удалить эту запись?</p>
@@ -1253,8 +1325,18 @@ function TableDetail({ table, onBack }) {
         )}
 
         {fieldToDelete !== null && (
-          <div className="modal-overlay">
-            <div className="modal">
+          <div
+            className="modal-overlay"
+            onClick={() => {
+              if (!isDeletingField) {
+                setFieldToDelete(null)
+              }
+            }}
+          >
+            <div
+              className="modal"
+              onClick={(event) => event.stopPropagation()}
+            >
               <h3>Удаление поля</h3>
 
               <p>
