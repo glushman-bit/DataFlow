@@ -1,6 +1,8 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from dataflow.models import DataTable, DataField, DataRecord
 from dataflow.serializers import (
@@ -8,6 +10,7 @@ from dataflow.serializers import (
     DataFieldSerializer,
     DataRecordSerializer,
 )
+from .services.deadlines import get_overdue_records
 
 
 class DataTableViewSet(viewsets.ModelViewSet):
@@ -104,3 +107,26 @@ class DataRecordViewSet(viewsets.ModelViewSet):
         )
 
         return context
+
+    def overdue(self, request, *args, **kwargs):
+        """Возвращает просроченные записи таблицы."""
+
+        table = get_object_or_404(
+            DataTable,
+            pk=self.kwargs['table_id'],
+            owner=self.request.user
+        )
+
+        overdue_records = get_overdue_records(table)
+
+        result = []
+
+        for item in overdue_records:
+            record_data = self.get_serializer(item['record']).data
+
+            result.append({
+                **record_data,
+                'overdue_fields': item['overdue_fields'],
+            })
+
+        return Response(result)
