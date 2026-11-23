@@ -5,6 +5,7 @@ import {
   updateField,
   deleteField,
   getRecords,
+  getOverdueRecords,
   createRecord,
   updateRecord,
   deleteRecord
@@ -99,6 +100,8 @@ function getInitialRecordValues(fields) {
 function TableDetail({ table, onBack }) {
   const [fields, setFields] = useState([])
   const [records, setRecords] = useState([])
+  const [overdueRecords, setOverdueRecords] = useState([])
+
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
   const [isAddingRecord, setIsAddingRecord] = useState(false)
@@ -121,7 +124,6 @@ function TableDetail({ table, onBack }) {
   const [editFieldRequired, setEditFieldRequired] = useState(true)
   const [editFieldSettings, setEditFieldSettings] = useState({})
   const [editFieldError, setEditFieldError] = useState('')
-
   const [editingRecordId, setEditingRecordId] = useState(null)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [newFieldRequired, setNewFieldRequired] = useState(true)
@@ -139,11 +141,16 @@ function TableDetail({ table, onBack }) {
         setIsLoading(true)
         setError('')
 
-        const data = await getFields(table.id)
-        const recordsData = await getRecords(table.id)
+        const [data, recordsData, overdueData] = await Promise.all([
+          getFields(table.id),
+          getRecords(table.id),
+          getOverdueRecords(table.id),
+        ])
 
         setFields(data)
         setRecords(recordsData)
+        setOverdueRecords(overdueData)
+        console.log('Просроченные записи:', overdueData)
         setNewRecordValues(getInitialRecordValues(data))
 
       } catch (error) {
@@ -817,7 +824,14 @@ function TableDetail({ table, onBack }) {
 
               <tbody>
                 {records.map((record) => (
-                  <tr key={record.id}>
+                  <tr
+                    key={record.id}
+                    className={
+                      overdueRecords.some(item => item.id === record.id)
+                        ? 'overdue-row'
+                        : ''
+                    }
+                  >
                     {fields.map((field) => (
                       <td key={field.id}>
                         {field.field_type === 'boolean'
