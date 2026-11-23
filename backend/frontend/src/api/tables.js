@@ -146,6 +146,19 @@ export async function getRecords(tableId) {
 }
 
 
+export async function getOverdueRecords(tableId) {
+  const response = await apiRequest(
+    `/api/tables/${tableId}/records/overdue/`
+  )
+
+  if (!response.ok) {
+    throw new Error('Не удалось загрузить просроченные записи.')
+  }
+
+  return response.json()
+}
+
+
 export async function createRecord(tableId, values) {
   const response = await apiRequest(`/api/tables/${tableId}/records/`, {
     method: 'POST',
