@@ -36,6 +36,13 @@ urlpatterns = [
         name="table_records",
     ),
     path(
+        "tables/<int:table_id>/records/overdue/",
+        DataRecordViewSet.as_view({
+            "get": "overdue",
+    }),
+        name="table_overdue",
+    ),
+    path(
         "tables/<int:table_id>/records/<int:pk>/",
         DataRecordViewSet.as_view({
             "get": "retrieve",
