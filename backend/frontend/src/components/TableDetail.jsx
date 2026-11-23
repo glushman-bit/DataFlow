@@ -795,8 +795,20 @@ function TableDetail({ table, onBack }) {
           )}
 
         {isAddModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal">
+          <div
+            className="modal-overlay"
+            onClick={() => {
+              if (!isAddingRecord) {
+                setIsAddModalOpen(false)
+                setNewRecordValues(getInitialRecordValues(fields))
+                setFieldErrors({})
+                setError('')
+              }
+            }}
+          >
+            <div className="modal"
+                 onClick={(event) => event.stopPropagation()}
+            >
               <h3>Добавление записи</h3>
 
               <p className="required-hint">
@@ -904,8 +916,19 @@ function TableDetail({ table, onBack }) {
         )}
 
         {isAddFieldModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal">
+          <div
+            className="modal-overlay"
+            onClick={() => {
+              if (!isAddingField) {
+                setIsAddFieldModalOpen(false)
+                setError('')
+              }
+            }}
+          >
+            <div
+              className="modal"
+              onClick={(event) => event.stopPropagation()}
+            >
               <h3>Добавление поля</h3>
 
               <div className="field-form">
@@ -1008,8 +1031,20 @@ function TableDetail({ table, onBack }) {
         )}
 
         {isEditFieldModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal">
+          <div
+            className="modal-overlay"
+            onClick={() => {
+              if (!isUpdatingField) {
+                setIsEditFieldModalOpen(false)
+                setFieldToEdit(null)
+                setEditFieldError('')
+              }
+            }}
+          >
+            <div
+              className="modal"
+              onClick={(event) => event.stopPropagation()}
+            >
               <h3>Редактирование поля</h3>
 
               <div className="field-form">
@@ -1080,8 +1115,17 @@ function TableDetail({ table, onBack }) {
         )}
 
         {isEditModalOpen && (
-          <div className="modal-overlay">
-            <div className="modal">
+          <div
+              className="modal-overlay"
+              onClick={() => {
+                if (!isUpdatingRecord) {
+                  handleCancelEdit()
+                }
+              }}
+          >
+            <div
+                className="modal"
+                onClick={(event) => event.stopPropagation()}>
               <h3>Редактирование записи</h3>
 
               <div className="record-form modal-record-form">
@@ -1237,7 +1281,6 @@ function TableDetail({ table, onBack }) {
             </div>
           </div>
         )}
-
 
         </>
       )}
