@@ -133,7 +133,10 @@ function TableDetail({ table, onBack }) {
   const [editError, setEditError] = useState('')
   const [isAddModalOpen, setIsAddModalOpen] = useState(false)
   const [isAddFieldModalOpen, setIsAddFieldModalOpen] = useState(false)
+  const [isOverdueModalOpen, setIsOverdueModalOpen] = useState(false)
 
+
+  // console.log('Модальное окно просроченных записей:', isOverdueModalOpen)
 
   useEffect(() => {
     async function loadFields() {
@@ -150,7 +153,7 @@ function TableDetail({ table, onBack }) {
         setFields(data)
         setRecords(recordsData)
         setOverdueRecords(overdueData)
-        console.log('Просроченные записи:', overdueData)
+
         setNewRecordValues(getInitialRecordValues(data))
 
       } catch (error) {
@@ -202,6 +205,12 @@ function TableDetail({ table, onBack }) {
       if (fieldToDelete !== null && !isDeletingField) {
         setFieldToDelete(null)
       }
+
+      if (isOverdueModalOpen) {
+        setIsOverdueModalOpen(false)
+        return
+      }
+
     }
 
     window.addEventListener('keydown', handleEscape)
@@ -217,6 +226,7 @@ function TableDetail({ table, onBack }) {
     isAddFieldModalOpen,
     isAddingField,
     isEditFieldModalOpen,
+    isOverdueModalOpen,
     isUpdatingField,
     recordToDelete,
     isDeletingRecord,
@@ -656,6 +666,9 @@ function TableDetail({ table, onBack }) {
         )
       )
 
+      const overdueData = await getOverdueRecords(table.id)
+      setOverdueRecords(overdueData)
+
       setEditingRecordId(null)
       setNewRecordValues({})
       setIsEditModalOpen(false)
@@ -804,70 +817,81 @@ function TableDetail({ table, onBack }) {
             + Добавить запись
           </button>
 
-          <h3>Записи таблицы</h3>
+          <div className="section-heading">
+            <h3>Записи таблицы</h3>
+
+            <button
+              className="overdue-button"
+              onClick={() => setIsOverdueModalOpen(true)}
+            >
+              Просроченные записи ({overdueRecords.length})
+            </button>
+          </div>
 
           {records.length === 0 ? (
             <p>В таблице пока нет записей.</p>
           ) : (
-            <table>
-              <thead>
-                <tr>
-                  {fields.map((field) => (
-                    <th key={field.id}>
-                      {field.label}
-                    </th>
-                  ))}
-
-                  <th>Действия</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {records.map((record) => (
-                  <tr
-                    key={record.id}
-                    className={
-                      overdueRecords.some(item => item.id === record.id)
-                        ? 'overdue-row'
-                        : ''
-                    }
-                  >
+            <div className="table-wrapper">
+              <table>
+                <thead>
+                  <tr>
                     {fields.map((field) => (
-                      <td key={field.id}>
-                        {field.field_type === 'boolean'
-                          ? record.values[field.name] === true
-                            ? 'Да'
-                            : record.values[field.name] === false
-                              ? 'Нет'
-                              : ''
-                          : field.field_type === 'datetime'
-                            ? formatDateTime(record.values[field.name])
-                            : record.values[field.name]}
-                      </td>
+                      <th key={field.id}>
+                        {field.label}
+                      </th>
                     ))}
 
-                    <td>
-                      <button
-                        className="edit-button"
-                        onClick={() => handleEditRecord(record)}
-                        title="Редактировать запись"
-                      >
-                        ✎
-                      </button>
-
-                      <button
-                        className="delete-button"
-                        onClick={() => handleDeleteRecord(record.id)}
-                        title="Удалить запись"
-                      >
-                        ×
-                      </button>
-                    </td>
-
+                    <th>Действия</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+
+                <tbody>
+                  {records.map((record) => (
+                    <tr
+                      key={record.id}
+                      className={
+                        overdueRecords.some(item => item.id === record.id)
+                          ? 'overdue-row'
+                          : ''
+                      }
+                    >
+                      {fields.map((field) => (
+                        <td key={field.id}>
+                          {field.field_type === 'boolean'
+                            ? record.values[field.name] === true
+                              ? 'Да'
+                              : record.values[field.name] === false
+                                ? 'Нет'
+                                : ''
+                            : field.field_type === 'datetime'
+                              ? formatDateTime(record.values[field.name])
+                              : record.values[field.name]}
+                        </td>
+                      ))}
+
+                      <td>
+                        <button
+                          className="edit-button"
+                          onClick={() => handleEditRecord(record)}
+                          title="Редактировать запись"
+                        >
+                          ✎
+                        </button>
+
+                        <button
+                          className="delete-button"
+                          onClick={() => handleDeleteRecord(record.id)}
+                          title="Удалить запись"
+                        >
+                          ×
+                        </button>
+                      </td>
+
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
 
         {isAddModalOpen && (
@@ -1300,6 +1324,68 @@ function TableDetail({ table, onBack }) {
             </div>
           </div>
         )}
+
+        {isOverdueModalOpen && (
+          <div
+            className="modal-overlay"
+            onClick={() => setIsOverdueModalOpen(false)}
+          >
+            <div
+              className="modal overdue-modal"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <h3>Просроченные записи ({overdueRecords.length})</h3>
+
+              {overdueRecords.length === 0 ? (
+                <p className="empty-state">
+                  Просроченных записей нет.
+                </p>
+              ) : (
+                <div className="table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        {fields.map((field) => (
+                          <th key={field.id}>{field.label}</th>
+                        ))}
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {overdueRecords.map((record) => (
+                        <tr key={record.id} className="overdue-row">
+                          {fields.map((field) => (
+                            <td key={field.id}>
+                              {field.field_type === 'boolean'
+                                ? record.values[field.name] === true
+                                  ? 'Да'
+                                  : record.values[field.name] === false
+                                    ? 'Нет'
+                                    : ''
+                                : field.field_type === 'datetime'
+                                  ? formatDateTime(record.values[field.name])
+                                  : record.values[field.name]}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              <div className="modal-actions">
+                <button
+                  className="cancel-button"
+                  onClick={() => setIsOverdueModalOpen(false)}
+                >
+                  Закрыть
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
 
         {recordToDelete !== null && (
           <div
