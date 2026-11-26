@@ -459,6 +459,26 @@ button:hover {
   border-bottom: none;
 }
 
+/* Горизонтальная прокрутка таблицы */
+.table-detail .table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Таблица сохраняет необходимую ширину */
+.table-detail .table-wrapper table {
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Минимальная ширина столбцов */
+.table-detail .table-wrapper th,
+.table-detail .table-wrapper td {
+  min-width: 25ch;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+}
 
 /* 11. Кнопки действий */
 
@@ -991,10 +1011,16 @@ button:hover {
   background: #cbd5e1;
 }
 
-.settings .error,
+.settings .error {
+  margin: 0;
+  font-size: 13px;
+  color: #dc2626;
+}
+
 .settings .success {
   margin: 0;
   font-size: 13px;
+  color: darkgreen;
 }
 
 @media (max-width: 600px) {
@@ -1040,4 +1066,32 @@ button:hover {
 .table-detail tbody tr.overdue-row:hover,
 .table-detail tbody tr.overdue-row:hover td {
   background: #fecaca;
+}
+
+.overdue-modal {
+  width: 85vw;
+  max-width: 1200px;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+/* Контейнер таблицы с горизонтальной прокруткой */
+.overdue-modal .table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+/* Таблица сохраняет необходимую ширину */
+.overdue-modal .table-wrapper table {
+  width: max-content;
+  min-width: 100%;
+}
+
+/* Минимальная ширина каждого столбца */
+.overdue-modal .table-wrapper th,
+.overdue-modal .table-wrapper td {
+  min-width: 25ch;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
 }
