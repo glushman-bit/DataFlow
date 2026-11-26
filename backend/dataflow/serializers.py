@@ -66,14 +66,9 @@ class DataFieldSerializer(serializers.ModelSerializer):
             self.instance.settings if self.instance else {}
         )
 
-        # Объединяем настройки при частичном обновлении.
+        # При обновлении используем переданные настройки целиком.
         if self.instance and self.partial and 'settings' in attrs:
-            settings = {
-                **self.instance.settings,
-                **settings,
-            }
-
-            attrs['settings'] = settings
+            settings = attrs['settings']
 
         min_value = settings.get('min')
         max_value = settings.get('max')
@@ -90,7 +85,7 @@ class DataFieldSerializer(serializers.ModelSerializer):
                     )
                 })
 
-            if not isinstance(deadline, date):
+            if not isinstance(deadline, dict):
                 raise serializers.ValidationError({
                     'settings': 'Настройки контроля срока должны быть объектом.'
                 })
@@ -234,10 +229,7 @@ class DataFieldSerializer(serializers.ModelSerializer):
         new_settings = validated_data.get('settings')
 
         if new_settings is not None:
-            validated_data['settings'] = {
-                **instance.settings,
-                **new_settings,
-            }
+            validated_data['settings'] = new_settings
 
         return super().update(instance, validated_data)
 
