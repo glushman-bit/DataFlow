@@ -93,6 +93,7 @@ def test_data_field_serializer_partial_update_settings(data_table):
         data={
             "settings": {
                 "min": "2026-11-19T11:00:00+03:00",
+                "max": "2026-11-19T14:00:00+03:00",
             }
         },
         partial=True,
@@ -130,6 +131,7 @@ def test_data_field_serializer_partial_update_invalid_settings(data_table):
         data={
             "settings": {
                 "min": "2026-11-19T15:00:00+03:00",
+                "max": "2026-11-19T14:00:00+03:00",
             }
         },
         partial=True,
