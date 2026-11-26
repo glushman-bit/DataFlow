@@ -187,6 +187,17 @@ function Settings() {
         }
 
         settings.auto_now = editingField.auto_now
+
+        const deadline = {
+          ...(editingField.settings?.deadline || {}),
+          enabled: editingField.deadline_enabled,
+        }
+
+        if (deadline.enabled) {
+          settings.deadline = deadline
+        } else {
+          delete settings.deadline
+        }
       }
 
       const updatedField = await updateField(
@@ -296,6 +307,7 @@ function Settings() {
                               min_length: field.settings?.min_length ?? '',
                               max_length: field.settings?.max_length ?? '',
                               auto_now: field.settings?.auto_now ?? false,
+                              deadline_enabled: field.settings?.deadline?.enabled ?? false,
                             })
 
                             setSaveError('')
@@ -479,6 +491,23 @@ function Settings() {
                             </label>
                           )}
 
+                          {(editingField.field_type === 'date' ||
+                            editingField.field_type === 'datetime') && (
+                            <label>
+                              <input
+                                type="checkbox"
+                                checked={editingField.deadline_enabled}
+                                onChange={event =>
+                                  setEditingField({
+                                    ...editingField,
+                                    deadline_enabled: event.target.checked,
+                                  })
+                                }
+                              />
+                              Контроль срока (отслеживать просроченные записи)
+                            </label>
+                          )}
+
                           <div className="form-actions">
                             <button
                               type="button"
@@ -506,7 +535,6 @@ function Settings() {
                     </div>
                   ))}
                 </div>
-
 
                 {saveSuccess && <p className="success">{saveSuccess}</p>}
 
