@@ -84,7 +84,12 @@ export async function createField(tableId, fieldData) {
   })
 
   if (!response.ok) {
-    throw new Error('Не удалось создать поле.')
+    const errorData = await response.json()
+
+    const error = new Error('Не удалось создать поле.')
+    error.details = errorData
+
+    throw error
   }
 
   return response.json()
@@ -170,15 +175,9 @@ export async function createRecord(tableId, values) {
     }),
   })
 
-
-  console.log('Статус ответа:', response.status)
-  console.log('Ответ сервера:', response)
-
   if (!response.ok) {
     await handleApiError(response, 'Не удалось создать запись.')
   }
-
-
 
   return response.json()
 }

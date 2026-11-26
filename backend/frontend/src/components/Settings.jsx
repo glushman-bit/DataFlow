@@ -1,7 +1,26 @@
-import { getFields } from '../api/tables'
+import { getFields, getTables, updateField, createField, deleteField } from '../api/tables'
 import { useEffect, useState } from 'react'
-import { getTables } from '../api/tables'
-import { updateField } from '../api/tables'
+
+
+function generateFieldName(label) {
+  const transliteration = {
+    а: 'a', б: 'b', в: 'v', г: 'g', д: 'd',
+    е: 'e', ё: 'yo', ж: 'zh', з: 'z', и: 'i',
+    й: 'y', к: 'k', л: 'l', м: 'm', н: 'n',
+    о: 'o', п: 'p', р: 'r', с: 's', т: 't',
+    у: 'u', ф: 'f', х: 'h', ц: 'ts', ч: 'ch',
+    ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '',
+    э: 'e', ю: 'yu', я: 'ya',
+  }
+
+  return label
+    .toLowerCase()
+    .split('')
+    .map(char => transliteration[char] ?? char)
+    .join('')
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '')
+}
 
 
 function Settings() {
@@ -16,6 +35,15 @@ function Settings() {
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState('')
+
+  const [isAddFieldOpen, setIsAddFieldOpen] = useState(false)
+  const [isAddingField, setIsAddingField] = useState(false)
+  const [newFieldName, setNewFieldName] = useState('')
+  const [newFieldLabel, setNewFieldLabel] = useState('')
+  const [newFieldType, setNewFieldType] = useState('text')
+  const [newFieldRequired, setNewFieldRequired] = useState(true)
+  const [newFieldSettings, setNewFieldSettings] = useState({})
+
 
   useEffect(() => {
     async function loadTables() {
@@ -66,6 +94,49 @@ function Settings() {
     return new Date(value).toISOString()
   }
 
+
+  async function handleAddField() {
+    const fieldData = {
+      name: newFieldName.trim(),
+      label: newFieldLabel.trim(),
+      field_type: newFieldType,
+      required: newFieldRequired,
+      order: fields.length,
+      settings: newFieldSettings,
+    }
+
+    try {
+      setIsAddingField(true)
+      setSaveError('')
+      setSaveSuccess('')
+
+      const newField = await createField(selectedTableId, fieldData)
+
+      setFields(prevFields => [...prevFields, newField])
+      setNewFieldName('')
+      setNewFieldLabel('')
+      setNewFieldType('text')
+      setNewFieldRequired(true)
+      setNewFieldSettings({})
+      setIsAddFieldOpen(false)
+      setSaveSuccess('Поле успешно добавлено.')
+    } catch (error) {
+      const details = error.details
+
+      if (details?.name || details?.label) {
+        const messages = [
+          ...(details.name || []),
+          ...(details.label || []),
+        ]
+
+        setSaveError(messages.join(' '))
+      } else {
+        setSaveError(error.message || 'Не удалось добавить поле.')
+      }
+    } finally {
+      setIsAddingField(false)
+    }
+  }
 
 
   async function handleSaveField() {
@@ -221,6 +292,35 @@ function Settings() {
     }
   }
 
+
+  async function handleDeleteField(field) {
+    const confirmed = window.confirm(
+      `Удалить поле «${field.label}»?`
+    )
+
+    if (!confirmed) return
+
+    try {
+      setSaveError('')
+      setSaveSuccess('')
+
+      await deleteField(selectedTableId, field.id)
+
+      setFields(prevFields =>
+        prevFields.filter(item => item.id !== field.id)
+      )
+
+      if (editingField?.id === field.id) {
+        setEditingField(null)
+      }
+
+      setSaveSuccess('Поле успешно удалено.')
+    } catch (error) {
+      setSaveError(error.message || 'Не удалось удалить поле.')
+    }
+  }
+
+
   if (loading) {
     return <p>Загрузка таблиц...</p>
   }
@@ -267,6 +367,85 @@ function Settings() {
 
             <h3>Поля таблицы</h3>
 
+            <button
+              type="button"
+              onClick={() => {
+                setIsAddFieldOpen(true)
+                setSaveError('')
+                setSaveSuccess('')
+              }}
+            >
+              Добавить поле
+            </button>
+
+            {isAddFieldOpen && (
+              <div className="edit-field-form">
+                <h3>Добавление поля</h3>
+
+                {saveError && <p className="error">{saveError}</p>}
+
+                <input
+                  type="text"
+                  placeholder="Название поля (например, Клиент)"
+                  value={newFieldLabel}
+                  onChange={event => {
+                    const value = event.target.value
+
+                    setNewFieldLabel(value)
+                    setNewFieldName(generateFieldName(value))
+                  }}
+                />
+
+                <select
+                  value={newFieldType}
+                  onChange={event => {
+                    setNewFieldType(event.target.value)
+                    setNewFieldSettings({})
+                  }}
+                >
+                  <option value="text">Текст</option>
+                  <option value="integer">Целое число</option>
+                  <option value="decimal">Десятичное число</option>
+                  <option value="date">Дата</option>
+                  <option value="datetime">Дата и время</option>
+                  <option value="phone">Номер телефона</option>
+                  <option value="email">Электронная почта</option>
+                  <option value="boolean">Да / Нет</option>
+                  <option value="url">Ссылка</option>
+                </select>
+
+                <label>
+                  <input
+                    type="checkbox"
+                    checked={newFieldRequired}
+                    onChange={event => setNewFieldRequired(event.target.checked)}
+                  />
+                  Обязательное поле
+                </label>
+
+                <div className="form-actions">
+                  <button
+                    type="button"
+                    onClick={handleAddField}
+                    disabled={isAddingField}
+                  >
+                    {isAddingField ? 'Добавление...' : 'Добавить'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsAddFieldOpen(false)
+                      setSaveError('')
+                    }}
+                    disabled={isAddingField}
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            )}
+
             {fieldsLoading && <p>Загрузка полей...</p>}
 
             {fieldsError && <p className="error">{fieldsError}</p>}
@@ -290,32 +469,55 @@ function Settings() {
                           </p>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (editingField?.id === field.id) {
-                              setEditingField(null)
-                              setSaveError('')
-                              return
-                            }
+                        <div className="settings-field-actions">
+                          {editingField?.id === field.id ? (
+                            <button
+                              type="button"
+                              title="Закрыть редактирование"
+                              aria-label="Закрыть редактирование"
+                              onClick={() => {
+                                setEditingField(null)
+                                setSaveError('')
+                              }}
+                            >
+                              ✖
+                            </button>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                title="Редактировать поле"
+                                aria-label="Редактировать поле"
+                                onClick={() => {
+                                  setEditingField({
+                                    ...field,
+                                    min: field.settings?.min ?? '',
+                                    max: field.settings?.max ?? '',
+                                    decimal_places: field.settings?.decimal_places ?? 2,
+                                    min_length: field.settings?.min_length ?? '',
+                                    max_length: field.settings?.max_length ?? '',
+                                    auto_now: field.settings?.auto_now ?? false,
+                                    deadline_enabled: field.settings?.deadline?.enabled ?? false,
+                                  })
+                                  setSaveError('')
+                                  setSaveSuccess('')
+                                }}
+                              >
+                                ✎
+                              </button>
 
-                            setEditingField({
-                              ...field,
-                              min: field.settings?.min ?? '',
-                              max: field.settings?.max ?? '',
-                              decimal_places: field.settings?.decimal_places ?? 2,
-                              min_length: field.settings?.min_length ?? '',
-                              max_length: field.settings?.max_length ?? '',
-                              auto_now: field.settings?.auto_now ?? false,
-                              deadline_enabled: field.settings?.deadline?.enabled ?? false,
-                            })
+                              <button
+                                type="button"
+                                title="Удалить поле"
+                                aria-label="Удалить поле"
+                                onClick={() => handleDeleteField(field)}
+                              >
+                                🗑️
+                              </button>
+                            </>
+                          )}
+                        </div>
 
-                            setSaveError('')
-                            setSaveSuccess('')
-                          }}
-                        >
-                          {editingField?.id === field.id ? 'Закрыть' : 'Изменить'}
-                        </button>
                       </div>
 
                       {editingField?.id === field.id && (
